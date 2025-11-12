@@ -72,13 +72,67 @@ h2{margin:0 0 10px 4px; font-size:20px}
 .chip{
   border:none; background:#eef2ff; color:#1e293b; padding:10px 12px; border-radius:12px; cursor:pointer;
 }
-.liters{display:flex; align-items:end; gap:10px; padding:6px 6px 0 6px}
+
+/* ---------------------------------- */
+/* STYLES DES GRAPHIQUES (CHART CARDS) */
+/* ---------------------------------- */
+.liters{display:flex; align-items:stretch; gap:10px; padding:6px 6px 0 6px} 
 .liters #litersValue{font-size:72px; font-weight:800; letter-spacing:1px}
 .liters .unit{color:#19aaff; font-weight:700}
 
-/* Chart card */
-.chart-card{padding:12px 12px 6px}
-.card-title{font-weight:700; color:#0f172a; margin:2px 8px 8px}
+/* Chart card (Correction de Hauteur finale) */
+.chart-card {
+  padding: 12px 12px 6px;
+  height: 350px; /* Augmenté à 350px */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start; /* Aligner les éléments en haut */
+}
+.chart-card canvas {
+  flex-grow: 1; /* Permet au canvas d'occuper tout l'espace restant */
+  width: 100% !important;
+  min-height: 0; /* Important pour le flex-grow */
+}
+.card-title {
+  font-weight: 700;
+  color: #0f172a;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0 8px;
+}
+
+/* -------------------------------------- */
+/* STYLES DES SÉLECTEURS JOUR/MOIS */
+/* -------------------------------------- */
+.range-selector {
+    display: flex;
+    gap: 4px;
+    background: #eef2ff;
+    padding: 2px;
+    border-radius: 8px;
+    margin-left: 10px;
+    font-size: 14px;
+}
+.range-selector .chip {
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: transparent;
+    transition: background 0.2s;
+    font-weight: 500;
+    color: var(--muted);
+}
+.range-selector .chip.active {
+    background: var(--card);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    color: var(--primary);
+    font-weight: 700;
+}
+
 
 /* BOTTOM NAV avec encoche */
 .bottom-nav{
@@ -102,7 +156,6 @@ h2{margin:0 0 10px 4px; font-size:20px}
 .side-menu{
   position:fixed; inset:0 auto 0 0; width:82%; max-width:320px; background:#d9d9d9;
   translate:-100% 0; transition:translate .28s ease; z-index:20; padding:18px;
-  display:flex; flex-direction:column;
 }
 .side-menu.open{translate:0 0}
 .side-header{display:flex; align-items:center; justify-content:space-between; margin-bottom:8px}
@@ -130,23 +183,30 @@ canvas{display:block; width:100%}
 @supports (padding: max(0px)) {
   .bottom-nav{padding-bottom: max(12px, env(safe-area-inset-bottom));}
 }
-/* Chart card */
-.chart-card {
-  padding: 12px 12px 6px;
-  height: 280px;            /* ✅ hauteur fixe */
-  overflow: hidden;         /* ✅ rien ne dépasse */
+
+/* ======================================= */
+/* == AJOUT POUR LE WIDGET DE COÛT == */
+/* ======================================= */
+
+/*
+ * Style pour la DIV .units-column
+ * Il aligne "Litres" et "... €" verticalement.
+ */
+.units-column {
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  flex-direction: column; /* Empile les éléments */
+  justify-content: flex-end; /* Aligne en bas */
+  align-items: flex-start; /* Aligne à gauche */
+  padding-bottom: 4px; /* Petit ajustement pour aligner avec le bas du grand nombre */
 }
-.chart-card canvas {
-  flex: 1;
-  width: 100% !important;
-  height: 220px !important; /* ✅ fixe la zone du graphe */
-}
-.card-title {
+
+/*
+ * Style pour le SPAN .cost
+ * Il donne une couleur et une taille au coût.
+ */
+.liters .cost {
+  color: var(--primary); /* Utilise la couleur primaire (bleu) */
+  font-size: 18px; /* Un peu plus petit que 'Litres' mais visible */
   font-weight: 700;
-  color: #0f172a;
-  margin: 2px 8px 8px;
-  flex-shrink: 0;           /* ✅ ne rétrécit pas */
+  margin-top: 4px; /* Un petit espace entre Litres et le coût */
 }
