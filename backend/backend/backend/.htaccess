@@ -1,7 +1,0 @@
-# Autoriser l'exécution des fichiers PHP dans ce dossier
-<FilesMatch "\.php$">
-    Require all granted
-</FilesMatch>
-
-# Autoriser les scripts PHP
-AddType application/x-httpd-php .php
