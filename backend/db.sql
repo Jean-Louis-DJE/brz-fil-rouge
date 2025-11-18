@@ -4,5 +4,6 @@ USE breizh4line;
 CREATE TABLE consommation (
   id INT AUTO_INCREMENT PRIMARY KEY,
   date_mesure DATETIME NOT NULL,
-  valeur FLOAT NOT NULL
+  valeur FLOAT NOT NULL,
+  adresse_mac_capteur VARCHAR(17) NOT NULL  
 );

@@ -38,6 +38,17 @@
     <main class="content">
       <h2>Historique</h2>
 
+      <div class="mac-selector-container" style="margin-bottom: 12px;">
+          <label for="sensor-select-home">Filtrer par capteur :</label>
+          <select id="sensor-select-home" class="sensor-select-all">
+              <option value="ALL">Total (Tous les capteurs)</option>
+              <option value="00:1A:2B:3C:4D:01">Douche</option>
+              <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
+              <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
+              <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
+          </select>
+      </div>
+
       <div class="card kpi">
         
         <div class="date-row">
@@ -59,12 +70,19 @@
         <div class="card-title">
             Courbe de Consommation
             <div class="range-selector" id="homeRangeSelector">
-                <button class="chip active" data-range="day">Jour</button>
-                <button class="chip" data-range="month">Mois</button>
+                <button class="chip" data-range="day">Jour</button>
+                <button class="chip active" data-range="month">Mois</button>
+                <button class="chip" data-range="year">Année</button>
             </div>
         </div>
         <canvas id="historyChart" height="60"></canvas>
       </div>
+      
+            <div class="card chart-card">
+        <div class="card-title">Répartition Volume Total (%)</div>
+        <canvas id="volumeBreakdownChart" height="60"></canvas>
+      </div>
+      
     </main>
 
         <nav class="bottom-nav">
@@ -88,27 +106,34 @@
   <main class="content">
     <h2>Analyse des Coûts</h2>
 
+    <div class="mac-selector-container" style="margin-bottom: 12px;">
+        <label for="sensor-select-costs">Filtrer par capteur :</label>
+        <select id="sensor-select-costs" class="sensor-select-all">
+            <option value="ALL">Total (Tous les capteurs)</option>
+            <option value="00:1A:2B:3C:4D:01">Douche</option>
+            <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
+            <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
+            <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
+        </select>
+    </div>
+
     <div class="card chart-card">
       <div class="card-title">
         Coût par Jour (€)
         <div class="range-selector" id="costsRangeSelector">
-            <button class="chip active" data-range="week">7 Jours</button>
-            <button class="chip" data-range="month">Mois</button>
+            <button class="chip" data-range="week">Semaine</button>
+            <button class="chip active" data-range="month">Mois</button>
+            <button class="chip" data-range="year">Année</button>
         </div>
       </div>
       <canvas id="dailyCostChart" height="60"></canvas>
     </div>
     
     <div class="card chart-card">
-      <div class="card-title">Répartition des Usages (%)</div>
+      <div class="card-title">Répartition Coûts (€)</div>
       <canvas id="usageChart" height="60"></canvas>
     </div>
     
-    <div class="card">
-        <div class="card-title">Mon Objectif Mensuel</div>
-        <p>Projetez <strong><span id="costProjection">... €</span></strong> de dépense ce mois-ci. (Objectif : 50 €)</p>
-    </div>
-
   </main>
     <nav class="bottom-nav">
         <button class="nav-btn open-menu-btn"><span>≡</span></button>
@@ -134,6 +159,7 @@
     <div id="overlay" class="overlay"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
