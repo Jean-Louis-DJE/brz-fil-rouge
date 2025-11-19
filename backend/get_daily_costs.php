@@ -3,11 +3,10 @@
 header("Content-Type: application/json");
 include "config.php";
 
-// Récupération des filtres
 $date_debut = $_GET['start'] ?? date('Y-m-d', strtotime('-7 days')) . ' 00:00:00';
 $date_fin = $_GET['end'] ?? date('Y-m-d') . ' 23:59:59';
-$mac = $_GET['mac'] ?? 'ALL';
-$grouping_type = $_GET['group_by_period'] ?? 'day'; // hour, day, month
+$mac = $_GET['mac'] ?? 'ALL'; 
+$grouping_type = $_GET['group_by_period'] ?? 'day';
 $prix_m3 = 2.25; 
 
 $mac_filter = '';
@@ -18,23 +17,19 @@ if ($mac !== 'ALL') {
     $params[] = $mac;
 }
 
-// 1. Logique d'agrégation dynamique
+// Définition de la formule de formatage de date
 if ($grouping_type === 'month') {
-    // Regroupement par AN et MOIS (Ex: 2024-05-01)
-    $group_by_select = "DATE_FORMAT(date_mesure, '%Y-%m-01') AS periode_label";
-} elseif ($grouping_type === 'hour') {
-    // Regroupement par JOUR et HEURE (Ex: 2024-05-15 14:00)
-    $group_by_select = "DATE_FORMAT(date_mesure, '%Y-%m-%d %H:00:00') AS periode_label";
+    // Année/Mois (ex: '2024-05')
+    $date_format_sql = "DATE_FORMAT(date_mesure, '%Y-%m-01')";
 } else {
-    // Regroupement par JOUR (Par défaut, Semaine et Mois)
-    $group_by_select = "DATE(date_mesure) AS periode_label";
+    // Jour (ex: '2024-05-15')
+    $date_format_sql = "DATE(date_mesure)";
 }
 
-
-// Requête SQL pour agréger le volume par période
+// Requête SQL sécurisée (On groupe par la formule, pas par l'alias)
 $sql = "
     SELECT 
-        " . $group_by_select . ",
+        $date_format_sql as date_groupe,
         SUM(valeur) AS volume_total_litres
     FROM 
         consommation
@@ -42,28 +37,34 @@ $sql = "
         date_mesure BETWEEN ? AND ?
         " . $mac_filter . "
     GROUP BY 
-        periode_label
+        $date_format_sql
     ORDER BY
-        periode_label ASC
+        date_groupe ASC
 ";
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$resultat = [];
+    $resultat = [];
 
-foreach ($data as $row) {
-    $volume_m3 = $row['volume_total_litres'] / 1000.0;
-    $cout_total = $volume_m3 * $prix_m3;
+    foreach ($data as $row) {
+        $volume_m3 = $row['volume_total_litres'] / 1000.0;
+        $cout_total = $volume_m3 * $prix_m3;
 
-    $resultat[] = [
-        // Utiliser 'periode_label' pour la clé 'jour' car c'est l'étiquette de temps
-        'jour' => $row['periode_label'], 
-        'volume_litres' => round($row['volume_total_litres'], 0),
-        'cout_euros' => round($cout_total, 2)
-    ];
+        $resultat[] = [
+            'jour' => $row['date_groupe'], 
+            'volume_litres' => round($row['volume_total_litres'], 0),
+            'cout_euros' => round($cout_total, 2)
+        ];
+    }
+
+    echo json_encode($resultat);
+
+} catch (PDOException $e) {
+    // En cas d'erreur SQL, on renvoie le message pour le débogage
+    http_response_code(500);
+    echo json_encode(["error" => $e->getMessage()]);
 }
-
-echo json_encode($resultat);
 ?>

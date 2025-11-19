@@ -6,7 +6,7 @@ include "config.php";
 $date_debut = $_GET['start'] ?? date('Y-m-d', strtotime('-30 days')) . ' 00:00:00';
 $date_fin = $_GET['end'] ?? date('Y-m-d') . ' 23:59:59';
 $mac = $_GET['mac'] ?? 'ALL';
-$grouping_type = $_GET['group_by_period'] ?? 'day'; // 'day', 'hour', ou 'month'
+$grouping_type = $_GET['group_by_period'] ?? 'day'; 
 
 $mac_filter = '';
 $params = [$date_debut, $date_fin];
@@ -16,22 +16,18 @@ if ($mac !== 'ALL') {
     $params[] = $mac;
 }
 
-// 1. Logique d'agrégation dynamique
+// Définition de la formule de formatage
 if ($grouping_type === 'month') {
-    // Regroupement par AN et MOIS (pour les vues Année)
-    $group_by_select = "DATE_FORMAT(date_mesure, '%Y-%m-01') AS periode";
+    $date_format_sql = "DATE_FORMAT(date_mesure, '%Y-%m-01')";
 } elseif ($grouping_type === 'hour') {
-    // Regroupement par JOUR et HEURE (pour la vue Jour)
-    $group_by_select = "DATE_FORMAT(date_mesure, '%Y-%m-%d %H:00:00') AS periode";
+    $date_format_sql = "DATE_FORMAT(date_mesure, '%Y-%m-%d %H:00:00')";
 } else {
-    // Regroupement par JOUR (Par défaut, Semaine et Mois)
-    $group_by_select = "DATE(date_mesure) AS periode";
+    $date_format_sql = "DATE(date_mesure)";
 }
-
 
 $sql = "
     SELECT 
-        " . $group_by_select . ",
+        $date_format_sql as date_groupe,
         SUM(valeur) AS volume_total_litres
     FROM 
         consommation
@@ -39,22 +35,28 @@ $sql = "
         date_mesure BETWEEN ? AND ?
         " . $mac_filter . "
     GROUP BY 
-        periode
+        $date_format_sql
     ORDER BY
-        periode ASC
+        date_groupe ASC
 ";
 
-$stmt = $pdo->prepare($sql);
-$stmt->execute($params);
-$data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$resultat = [];
-foreach ($data as $row) {
-    $resultat[] = [
-        'date_mesure' => $row['periode'], 
-        'valeur' => $row['volume_total_litres']
-    ];
+    $resultat = [];
+    foreach ($data as $row) {
+        $resultat[] = [
+            'date_mesure' => $row['date_groupe'], 
+            'valeur' => $row['volume_total_litres']
+        ];
+    }
+
+    echo json_encode($resultat);
+
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(["error" => $e->getMessage()]);
 }
-
-echo json_encode($resultat);
 ?>

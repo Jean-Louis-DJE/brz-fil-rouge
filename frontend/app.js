@@ -1,277 +1,262 @@
-// ----- Views: Splash -> Quote -> Home -----
+// ==========================================
+// 1. NAVIGATION ET INTERFACE
+// ==========================================
+
 const viewSplash = document.getElementById('view-splash');
 const viewQuote = document.getElementById('view-quote');
 const viewHome = document.getElementById('view-home');
-const viewCosts = document.getElementById('view-costs'); // Vue des coûts
+const viewCosts = document.getElementById('view-costs'); 
 
 const goto = (el) => {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     el.classList.add('active');
-
-    // Gestion du style du menu latéral (pour l'onglet actif)
     const targetId = el.id;
     document.querySelectorAll('.side-link').forEach(link => {
         link.classList.remove('active');
-        
         if (link.getAttribute('onclick') && link.getAttribute('onclick').includes(targetId)) {
             link.classList.add('active');
         }
     });
 };
 
-// Timeline d’entrée
 setTimeout(() => goto(viewQuote), 1500);
 setTimeout(() => goto(viewHome), 3000);
 
-// ----- Menu latéral -----
 const sideMenu = document.getElementById('side-menu');
 const overlay = document.getElementById('overlay');
 const btnClose = document.getElementById('btn-close-menu');
 
-function openMenu() {
-    sideMenu.classList.add('open');
-    overlay.classList.add('show');
-}
-function closeMenu() {
-    sideMenu.classList.remove('open');
-    overlay.classList.remove('show');
-}
-// Écouteur pour tous les boutons de menu (topbar et bottombar des deux vues)
+function openMenu() { sideMenu.classList.add('open'); overlay.classList.add('show'); }
+function closeMenu() { sideMenu.classList.remove('open'); overlay.classList.remove('show'); }
+
 document.querySelectorAll('#btn-menu, #btn-menu-costs, #openMenu, .open-menu-btn').forEach(btn => {
     btn.addEventListener('click', openMenu);
 });
 btnClose?.addEventListener('click', closeMenu);
 overlay?.addEventListener('click', closeMenu);
 
-// ----- Sélection de dates (pour le KPI/Résumé) -----
+
+// ==========================================
+// 2. GESTION DES DATES (KPI ACCUEIL)
+// ==========================================
+
 const chipStart = document.getElementById('chip-start');
 const chipEnd = document.getElementById('chip-end');
 const inputStart = document.getElementById('dateStart');
 const inputEnd = document.getElementById('dateEnd');
 
-// Quand on clique sur le bouton, on déclenche le calendrier caché
 chipStart.addEventListener('click', () => inputStart.showPicker && inputStart.showPicker());
 chipEnd.addEventListener('click', () => inputEnd.showPicker && inputEnd.showPicker());
 
-// Quand on choisit une date, on met à jour le texte du bouton ET on recharge les données
 inputStart.addEventListener('change', () => {
     const date = new Date(inputStart.value);
     chipStart.textContent = `Du ${date.toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' })} ▾`;
-    updateDashboard(); // Appel de la fonction de mise à jour du KPI
-    updateHomeChart(); 
+    updateDashboard(); updateHomeChart(); 
 });
 inputEnd.addEventListener('change', () => {
     const date = new Date(inputEnd.value);
     chipEnd.textContent = `Au ${date.toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' })} ▾`;
-    updateDashboard(); // Appel de la fonction de mise à jour du KPI
-    updateHomeChart(); 
+    updateDashboard(); updateHomeChart(); 
 });
 
 
-// ----- Variables globales pour les graphiques, KPI et États de la Plage -----
+// ==========================================
+// 3. VARIABLES GLOBALES
+// ==========================================
+
 const litersEl = document.getElementById('litersValue');
 const costEl = document.getElementById('costValue'); 
-let chart; // Graphique temps réel de la page Home
-let dailyCostChart; // Graphique des coûts journaliers
+let chart;              // Courbe temps réel (Accueil)
+let dailyCostChart;     // Histogramme coûts (Coûts)
 let volumeBreakdownChart; // Camembert Volume (Accueil)
 let usageCostChart;     // Camembert Coût (Coûts)
 
-// NOUVEAUX ÉTATS POUR LES SÉLECTEURS DE PLAGE
-let homeRange = 'day'; // 'day', 'month', ou 'year'
-let costsRange = 'week'; // 'week', 'month', ou 'year'
-
-// NOUVEAU : État pour le filtre par capteur
+// États des filtres
+let homeRange = 'day'; 
+let costsRange = 'month'; 
 let selectedMac = 'ALL'; 
+
+// Date curseur pour la navigation historique (Onglet Coûts)
+let currentViewDate = new Date(); 
+
 const simulatedMacs = ['00:1A:2B:3C:4D:01', '00:1A:2B:3C:4D:02', '00:1A:2B:3C:4D:03', '00:1A:2B:3C:4D:04'];
-
-// NOUVEAU : Définition des couleurs et noms pour les camemberts
-const macNames = {
-    '00:1A:2B:3C:4D:01': 'Douche', 
-    '00:1A:2B:3C:4D:02': 'Lave-linge', 
-    '00:1A:2B:3C:4D:03': 'Évier Cuisine', 
-    '00:1A:2B:3C:4D:04': 'Robinet Extérieur'
-};
-const macColors = {
-    '00:1A:2B:3C:4D:01': '#0b67ff', // Bleu primaire
-    '00:1A:2B:3C:4D:02': '#ff8c1a', // Orange
-    '00:1A:2B:3C:4D:03': '#10bffd', // Cyan
-    '00:1A:2B:3C:4D:04': '#4caf50', // Vert
-};
+const macNames = { '00:1A:2B:3C:4D:01': 'Douche', '00:1A:2B:3C:4D:02': 'Lave-linge', '00:1A:2B:3C:4D:03': 'Cuisine', '00:1A:2B:3C:4D:04': 'Robinet Ext.' };
+const macColors = { '00:1A:2B:3C:4D:01': '#0b67ff', '00:1A:2B:3C:4D:02': '#ff8c1a', '00:1A:2B:3C:4D:03': '#10bffd', '00:1A:2B:3C:4D:04': '#4caf50' };
 
 
-// ----- Utilitaires de Calcul de Dates (Corrigé pour éviter le mélange des portées) -----
-function calculateDateRange(range) {
-    const now = new Date();
-    let startDate;
-    const endDate = now.toISOString().split('T')[0]; // Date d'aujourd'hui (YYYY-MM-DD)
+// ==========================================
+// 4. FONCTIONS UTILITAIRES
+// ==========================================
+
+// Convertir une date JS en string YYYY-MM-DD local
+function toLocalISOString(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+// Calcul des plages de dates (Logique Calendaire)
+function calculateDateRange(range, referenceDate = new Date()) {
+    const ref = new Date(referenceDate); 
+    let startDate, endDate;
 
     switch (range) {
         case 'day':
-            startDate = endDate; // Aujourd'hui
+            startDate = toLocalISOString(ref);
+            endDate = startDate;
             break;
         case 'week':
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(now.getDate() - 6);
-            startDate = sevenDaysAgo.toISOString().split('T')[0];
+            // Lundi de la semaine
+            const dayOfWeek = ref.getDay(); // 0=Dim, 1=Lun
+            // Si dimanche (0), on recule de 6 jours. Sinon on recule de (jour - 1)
+            let daysToSubtract = dayOfWeek === 0 ? 6 : dayOfWeek - 1; 
+            
+            const monday = new Date(ref);
+            monday.setDate(ref.getDate() - daysToSubtract);
+            startDate = toLocalISOString(monday);
+            
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            endDate = toLocalISOString(sunday);
             break;
         case 'month':
-            const thirtyDaysAgo = new Date();
-            thirtyDaysAgo.setDate(now.getDate() - 29);
-            startDate = thirtyDaysAgo.toISOString().split('T')[0];
+            // 1er du mois au dernier jour du mois
+            const firstDayOfMonth = new Date(ref.getFullYear(), ref.getMonth(), 1);
+            const lastDayOfMonth = new Date(ref.getFullYear(), ref.getMonth() + 1, 0);
+            startDate = toLocalISOString(firstDayOfMonth);
+            endDate = toLocalISOString(lastDayOfMonth);
             break;
         case 'year':
-            // LOGIQUE CORRIGÉE
-            const oneYearAgo = new Date();
-            oneYearAgo.setFullYear(now.getFullYear() - 1);
-            startDate = oneYearAgo.toISOString().split('T')[0];
+            // 1er Janvier au 31 Décembre
+            const firstDayOfYear = new Date(ref.getFullYear(), 0, 1);
+            const lastDayOfYear = new Date(ref.getFullYear(), 11, 31);
+            startDate = toLocalISOString(firstDayOfYear);
+            endDate = toLocalISOString(lastDayOfYear);
             break;
         default:
-            startDate = endDate; // Défaut
+            startDate = toLocalISOString(ref);
+            endDate = startDate;
     }
     
     return { 
         start: `${startDate} 00:00:00`,
-        end: `${endDate} 23:59:59`
+        end: `${endDate} 23:59:59`,
+        labelObj: { start: startDate, end: endDate }
     };
 }
 
-// ----- Chargement des données historiques pour le graphique temps réel -----
-async function fetchData(start, end, grouping) { // 'grouping' est l'état homeRange
+// Mettre à jour le texte de la période affichée dans l'onglet Coûts
+function updatePeriodDisplay() {
+    const labelEl = document.getElementById('currentPeriodLabel');
+    if (!labelEl) return;
+
+    if (costsRange === 'year') {
+        labelEl.textContent = currentViewDate.getFullYear();
+    } else if (costsRange === 'month') {
+        labelEl.textContent = currentViewDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    } else if (costsRange === 'week') {
+        const { labelObj } = calculateDateRange('week', currentViewDate);
+        const s = new Date(labelObj.start);
+        const e = new Date(labelObj.end);
+        labelEl.textContent = `${s.getDate()} ${s.toLocaleDateString('fr-FR', {month:'short'})} - ${e.getDate()} ${e.toLocaleDateString('fr-FR', {month:'short'})}`;
+    } else {
+        labelEl.textContent = "En cours";
+    }
+}
+
+
+// ==========================================
+// 5. LOGIQUE DES GRAPHIQUES
+// ==========================================
+
+async function fetchData(start, end, grouping) { 
     let url;
     let macFilter = selectedMac !== 'ALL' ? `&mac=${selectedMac}` : ''; 
-    let groupByType; // Définira le paramètre 'group_by_period' pour le PHP
+    let groupByType; 
 
-    if (grouping === 'day') {
-        // Mode Jour : on veut l'agrégation par HEURE
-        groupByType = 'hour';
-    } else if (grouping === 'week' || grouping === 'month') {
-        // Mode Semaine/Mois : on veut l'agrégation par JOUR
-        groupByType = 'day';
-    } else if (grouping === 'year') {
-        // Mode Année : on veut l'agrégation par MOIS
-        groupByType = 'month';
-    } else {
-        groupByType = 'day';
-    }
+    if (grouping === 'day') groupByType = 'hour';
+    else if (grouping === 'week' || grouping === 'month') groupByType = 'day';
+    else if (grouping === 'year') groupByType = 'month';
+    else groupByType = 'day';
 
-    // Le backend get_aggregated_data.php gère maintenant tous les groupements non-bruts
     url = `../backend/get_aggregated_data.php?start=${start}&end=${end}${macFilter}&group_by_period=${groupByType}`;
     
     try {
         const res = await fetch(url);
-        if (!res.ok) { 
-            throw new Error(`Erreur HTTP: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Erreur HTTP: ${res.status}`);
         const json = await res.json();
         
         return json.map(d => {
             let label;
-            // Adapte l'étiquette en fonction de l'agrégation (pour l'affichage sur l'axe X)
             if (groupByType === 'month') { 
                  label = new Date(d.date_mesure).toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
             } else if (groupByType === 'day') {
                 label = new Date(d.date_mesure).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
-            } else { // Mode 'hour'
+            } else { 
                 label = new Date(d.date_mesure).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
             }
-            return {
-                x: label,
-                y: parseFloat(d.valeur)
-            };
+            return { x: label, y: parseFloat(d.valeur) };
         });
     } catch (err) {
-        console.error("Erreur de récupération des données graphiques (temps réel):", err);
+        console.error("Erreur fetch:", err);
         return [];
     }
 }
 
-// ----- Fonction de mise à jour du KPI/Résumé (utilise les sélecteurs de date en haut) -----
 async function updateDashboard() {
-    if (!inputStart.value || !inputEnd.value) {
-        return; 
-    }
-
+    if (!inputStart.value || !inputEnd.value) return; 
     const dateStart = inputStart.value + " 00:00:00";
-    const dateEnd = inputStart.value + " 23:59:59"; // KPI journalier
-
-    // 1. Mettre à jour le KPI de Litres et Coûts
+    const dateEnd = inputEnd.value + " 23:59:59";
     try {
-        const summaryRes = await fetch(`../backend/get_summary.php?start=${dateStart}&end=${dateEnd}`); 
-        if (!summaryRes.ok) {
-            throw new Error(`Erreur HTTP résumé: ${summaryRes.status}`);
-        }
-        const summary = await summaryRes.json();
-        
+        const res = await fetch(`../backend/get_summary.php?start=${dateStart}&end=${dateEnd}`); 
+        if (!res.ok) throw new Error(`Erreur KPI`);
+        const summary = await res.json();
         litersEl.textContent = Math.round(summary.volume_total_litres || 0);
-        
-        if (costEl) { 
-            costEl.textContent = `${summary.cout_total_euros.toFixed(2)} €`;
-        }
-
-    } catch (err) {
-        console.error("Erreur lors de la récupération du résumé :", err);
-        litersEl.textContent = "N/A";
-        if (costEl) costEl.textContent = "N/A €";
-    }
+        if (costEl) costEl.textContent = `${summary.cout_total_euros.toFixed(2)} €`;
+    } catch (err) { console.error("Erreur KPI", err); }
 }
 
-// ----- Mise à jour du Graphique de la page Home (Courbe temps réel) -----
 async function updateHomeChart() {
-    const rangeType = homeRange; 
-    const { start, end } = calculateDateRange(rangeType);
-
+    const { start, end } = calculateDateRange(homeRange, new Date()); 
     try {
-        // NOUVEAU : Passer homeRange à fetchData pour l'agrégation
         const points = await fetchData(start, end, homeRange); 
         if (chart) {
             chart.data.labels = points.map(p => p.x);
             chart.data.datasets[0].data = points.map(p => p.y);
-            // Affiche l'axe X si on n'est pas en mode "Jour" (temps réel)
             chart.options.scales.x.display = homeRange !== 'day'; 
             chart.update();
         }
-    } catch (err) {
-        console.error("Erreur lors de la mise à jour du graphique de la page d'accueil :", err);
-    }
+    } catch (err) { console.error("Erreur Home Chart"); }
 }
 
-
-// ----- Chart.js: Histogramme des coûts par jour -----
+// --- Graphique Coûts (AVEC NAVIGATION) ---
 async function drawDailyCostChart() {
-    const rangeType = costsRange; 
-    const { start, end } = calculateDateRange(rangeType);
-    
+    const { start, end } = calculateDateRange(costsRange, currentViewDate);
     let macFilter = selectedMac !== 'ALL' ? `&mac=${selectedMac}` : ''; 
-    
-    // NOUVEAU : Déterminer le type de regroupement à passer au PHP
     const grouping = (costsRange === 'year') ? 'month' : 'day'; 
 
     try {
-        // NOUVEAU : Ajouter le paramètre group_by_period
         const res = await fetch(`../backend/get_daily_costs.php?start=${start}&end=${end}${macFilter}&group_by_period=${grouping}`); 
-        
-        if (!res.ok) {
-            throw new Error(`Erreur HTTP: ${res.status}`);
-        }
+        if (!res.ok) throw new Error(`Erreur Coûts`);
         const data = await res.json();
 
-        const labels = data.map(d => new Date(d.jour).toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }));
+        let labelOptions;
+        if (costsRange === 'year') labelOptions = { month: 'short' }; 
+        else labelOptions = { weekday: 'short', day: 'numeric' };
+        
+        const labels = data.map(d => new Date(d.jour).toLocaleDateString('fr-FR', labelOptions));
         const costs = data.map(d => d.cout_euros);
 
-        // Récupération du nom affiché du capteur pour le titre
-        let chartTitle = "Coût par Jour (€)";
+        let chartTitle = "Coût de ma Consommation (€)"; 
         const sensorSelectCost = document.getElementById('sensor-select-costs');
-
         if (selectedMac !== 'ALL' && sensorSelectCost && sensorSelectCost.selectedIndex !== -1) {
-            const selectedOption = sensorSelectCost.options[sensorSelectCost.selectedIndex];
-            chartTitle += ` - ${selectedOption.textContent}`;
+            chartTitle += ` - ${sensorSelectCost.options[sensorSelectCost.selectedIndex].textContent}`;
         } else if (selectedMac === 'ALL') {
             chartTitle += ` - Total`;
         }
 
-
         if (!dailyCostChart) {
-            // CRÉATION INITIALE
             const ctx = document.getElementById('dailyCostChart').getContext('2d');
             dailyCostChart = new Chart(ctx, {
                 type: 'bar',
@@ -288,144 +273,78 @@ async function drawDailyCostChart() {
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    animation: false, 
-                    plugins: { 
-                        legend: { display: false },
-                        title: { 
-                            display: true,
-                            text: chartTitle 
-                        }
-                    },
+                    plugins: { legend: { display: false }, title: { display: true, text: chartTitle } },
                     scales: {
-                        x: { title: { display: false } },
-                        y: { beginAtZero: true, title: { display: true, text: 'Coût en Euros (€)' } }
+                        x: { title: { display: false }, display: true },
+                        y: { beginAtZero: true, title: { display: true, text: 'Coût (€)' } }
                     }
                 }
             });
         } else {
-            // MISE À JOUR
-            dailyCostChart.options.plugins.title.text = chartTitle; // METTRE À JOUR LE TITRE
+            dailyCostChart.options.plugins.title.text = chartTitle;
             dailyCostChart.data.labels = labels;
             dailyCostChart.data.datasets[0].data = costs;
             dailyCostChart.update('none'); 
         }
-
-    } catch (err) {
-        console.error("Erreur de chargement du graphique de coûts:", err);
-    }
+    } catch (err) { console.error("Erreur Cost Chart", err); }
 }
 
-// ----- NOUVELLE FONCTION : Dessin des camemberts de répartition -----
-async function drawBreakdownCharts() {
-    // La répartition utilise la plage de temps de la vue "Coûts"
-    const { start, end } = calculateDateRange(costsRange); 
+async function drawVolumePie() {
+    // Accueil : toujours "Aujourd'hui"
+    const { start, end } = calculateDateRange(homeRange, new Date()); 
+    await drawPie('volumeBreakdownChart', start, end, true);
+}
 
+async function drawCostPie() {
+    // Coûts : utilise la date du sélecteur (PERSISTANTE)
+    const { start, end } = calculateDateRange(costsRange, currentViewDate); 
+    await drawPie('usageChart', start, end, false);
+}
+
+async function drawPie(canvasId, start, end, isVolume) {
     try {
-        // 1. Récupération des données agrégées
         const res = await fetch(`../backend/get_breakdown.php?start=${start}&end=${end}`);
-        if (!res.ok) { throw new Error(`Erreur HTTP: ${res.status}`); }
+        if (!res.ok) return;
         const data = await res.json();
+        if (!data || data.length === 0) return; // On peut vider le graph ici si besoin
 
-        // Si aucune donnée n'est renvoyée (DB vide), on arrête
-        if (!data || data.length === 0) return; 
-
-        // Préparation des données pour Chart.js
         const labels = data.map(d => macNames[d.mac] || d.mac);
         const backgroundColors = data.map(d => macColors[d.mac] || '#cccccc');
-        
-        // Calcul des totaux
-        const volumes = data.map(d => d.volume_litres);
-        const costs = data.map(d => d.cout_euros);
-        const totalVolume = volumes.reduce((sum, val) => sum + val, 0);
-        const totalCost = costs.reduce((sum, val) => sum + val, 0);
+        const values = data.map(d => isVolume ? parseFloat(d.volume_litres) : parseFloat(d.cout_euros));
+        const total = values.reduce((a, b) => a + b, 0);
+        const unit = isVolume ? 'L' : '€';
+        const titleText = isVolume ? `Total : ${Math.round(total)} ${unit}` : `Total : ${total.toFixed(2)} ${unit}`;
 
+        let chartInstance = Chart.getChart(canvasId);
 
-        // --- Configuration du Camembert VOLUME (%) (Accueil) ---
-        if (!volumeBreakdownChart) {
-            const ctx = document.getElementById('volumeBreakdownChart').getContext('2d');
-            volumeBreakdownChart = new Chart(ctx, {
-                type: 'doughnut', 
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: volumes,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'right' },
-                        title: { display: true, text: `Volume total : ${Math.round(totalVolume)} L` },
-                        datalabels: { // Affiche le pourcentage sur la part
-                            formatter: (value, context) => {
-                                const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
-                                const percentage = Math.round((value / total) * 100);
-                                return percentage + '%';
-                            },
-                            color: '#fff',
-                            font: { weight: 'bold' }
-                        },
-                        tooltip: { // Détail des Litres au survol
-                            callbacks: {
-                                label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    label += `${Math.round(context.raw)} Litres (${(context.raw/totalVolume*100).toFixed(1)}%)`;
-                                    return label;
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        } else {
-            volumeBreakdownChart.data.labels = labels;
-            volumeBreakdownChart.data.datasets[0].data = volumes;
-            volumeBreakdownChart.options.plugins.title.text = `Volume total : ${Math.round(totalVolume)} L`;
-            volumeBreakdownChart.update('none');
-        }
-
-
-        // --- Configuration du Camembert COÛT (€) (Coûts) ---
-        if (!usageCostChart) {
-            const ctx = document.getElementById('usageChart').getContext('2d');
-            usageCostChart = new Chart(ctx, {
+        if (!chartInstance) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            new Chart(ctx, {
                 type: 'doughnut',
                 data: {
                     labels: labels,
-                    datasets: [{
-                        data: costs,
-                        backgroundColor: backgroundColors,
-                        borderWidth: 1,
-                    }]
+                    datasets: [{ data: values, backgroundColor: backgroundColors, borderWidth: 1 }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
                         legend: { position: 'right' },
-                        title: { display: true, text: `Coût total : ${totalCost.toFixed(2)} €` },
-                        datalabels: { // Affiche la valeur en euros directement sur la part
-                            formatter: (value, context) => {
-                                return value.toFixed(2) + ' €';
+                        title: { display: true, text: titleText },
+                        datalabels: { 
+                            formatter: (val, ctx) => {
+                                const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
+                                const pct = sum > 0 ? (val / sum * 100).toFixed(1) + '%' : '0%';
+                                return pct;
                             },
-                            color: '#fff',
-                            font: { weight: 'bold' }
+                            color: '#fff', font: { weight: 'bold' }
                         },
-                        tooltip: { // Détail en Euros au survol
+                        tooltip: { 
                             callbacks: {
                                 label: function(context) {
-                                    let label = context.label || '';
-                                    if (label) {
-                                        label += ': ';
-                                    }
-                                    label += `${context.raw.toFixed(2)} €`;
-                                    return label;
+                                    const sum = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const pct = (sum > 0) ? (context.raw / sum * 100).toFixed(1) : 0;
+                                    return `${isVolume ? Math.round(context.raw) : context.raw.toFixed(2)} ${unit} (${pct}%)`;
                                 }
                             }
                         }
@@ -433,68 +352,79 @@ async function drawBreakdownCharts() {
                 }
             });
         } else {
-            usageCostChart.data.labels = labels;
-            usageCostChart.data.datasets[0].data = costs;
-            usageCostChart.options.plugins.title.text = `Coût total : ${totalCost.toFixed(2)} €`;
-            usageCostChart.update('none');
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = values;
+            chartInstance.options.plugins.title.text = titleText;
+            chartInstance.update('none');
         }
-
-    } catch (err) {
-        console.error("Erreur de chargement des camemberts de répartition:", err);
-    }
+    } catch (e) { console.error("Erreur Pie", e); }
 }
 
 
-// ----- Gestion des événements de plage et du sélecteur de capteur -----
+// ==========================================
+// 6. LISTENERS
+// ==========================================
+
 function setupRangeListeners() {
-    // 1. Home Range Selector (Jour / Mois / Année)
+    // 1. Accueil
     document.getElementById('homeRangeSelector').addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
             document.querySelectorAll('#homeRangeSelector button').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
             homeRange = e.target.getAttribute('data-range');
             updateHomeChart();
-            drawBreakdownCharts(); // MAJ du Camembert Volume sur l'Accueil
+            drawVolumePie(); 
         }
     });
 
-    // 2. Costs Range Selector (Semaine / Mois / Année)
+    // 2. Coûts (Modification Ici : SUPPRESSION DU RESET DE DATE)
     document.getElementById('costsRangeSelector').addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
             document.querySelectorAll('#costsRangeSelector button').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
             costsRange = e.target.getAttribute('data-range');
+            
+            // On ne reset PAS currentViewDate ici. On garde la date sélectionnée.
+            
+            updatePeriodDisplay();
             drawDailyCostChart();
-            drawBreakdownCharts(); // MAJ du Camembert Coût et Volume
+            drawCostPie(); 
         }
     });
     
-    // 3. Sélecteur de Capteur (Synchronisation)
+    // 3. Date Picker
+    const datePicker = document.getElementById('costs-date-picker');
+    if (datePicker) {
+        datePicker.value = toLocalISOString(new Date());
+        
+        datePicker.addEventListener('change', (e) => {
+            const [y, m, d] = e.target.value.split('-');
+            currentViewDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+            
+            console.log("Date changée:", currentViewDate); // Debug
+            
+            updatePeriodDisplay();
+            drawDailyCostChart();
+            drawCostPie();
+        });
+    }
+    
+    // 4. Capteurs
     document.querySelectorAll('.sensor-select-all').forEach(selectElement => {
         selectElement.addEventListener('change', (e) => {
             const newMac = e.target.value;
             selectedMac = newMac;
-            
-            // Synchroniser les deux sélecteurs pour maintenir la cohérence
-            document.querySelectorAll('.sensor-select-all').forEach(otherSelect => {
-                if (otherSelect !== e.target) {
-                    otherSelect.value = newMac;
-                }
-            });
-
-            // Mise à jour des graphiques
-            updateHomeChart();
-            drawDailyCostChart();
+            document.querySelectorAll('.sensor-select-all').forEach(o => { if (o !== e.target) o.value = newMac; });
+            updateHomeChart(); drawDailyCostChart(); drawVolumePie(); drawCostPie();
         });
     });
 }
 
 
-// ----- Bloc d'initialisation principal -----
+// ----- Init -----
 (async () => {
     const ctx = document.getElementById('historyChart').getContext('2d');
     
-    // --- Définir les dates par défaut (pour les chips KPI) ---
     const today = new Date();
     const y = today.getFullYear();
     const m = String(today.getMonth() + 1).padStart(2, '0');
@@ -505,36 +435,29 @@ function setupRangeListeners() {
 
     chipStart.textContent = `Du ${new Date(inputStart.value).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' })} ▾`;
     chipEnd.textContent = `Au ${new Date(inputEnd.value).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' })} ▾`;
-    // --- Fin des dates par défaut ---
-
-    // Initialisation du graphique principal
+    
     chart = new Chart(ctx, {
         type: 'line',
         data: { labels: [], datasets: [{ data: [], borderColor: '#0b67ff', backgroundColor: 'rgba(11,103,255,.12)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#ff8c1a', pointHoverRadius: 4 }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: false,
-            plugins: { legend: { display: false } },
-            scales: {
-                x: { display: false }, 
-                y: { min: 0, grid: { color: 'rgba(15,23,42,.08)' } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { min: 0, grid: { color: 'rgba(15,23,42,.08)' } } } }
     });
 
-    // 1. CHARGEMENT INITIAL DES KPI (basé sur les chips de date)
-    await updateDashboard();
-    
-    // 2. CHARGEMENT INITIAL DES GRAPHIQUES (basé sur les états par défaut 'day' et 'week' et 'ALL' mac)
-    await updateHomeChart();
-    await drawDailyCostChart();
-    await drawBreakdownCharts(); // LANCEMENT DES CAMEMBERTS
-    
-    // 3. MISE EN PLACE DES ÉCOUTEURS POUR LES BOUTONS JOUR/MOIS/CAPTEUR
+    // Activation des Listeners AVANT le chargement des données
     setupRangeListeners();
+    updatePeriodDisplay();
 
-    // ----- SIMULATION D'INSERTION ET DE MISE À JOUR DU GRAPHIQUE -----
+    // Chargement initial
+    try {
+        await updateDashboard();
+        await updateHomeChart();
+        await drawDailyCostChart();
+        await drawVolumePie();
+        await drawCostPie();
+    } catch (e) {
+        console.error("Erreur chargement initial", e);
+    }
+
+    // Simulation
     let counter = 0;
     const updateInterval = 60000; 
 
@@ -543,8 +466,7 @@ function setupRangeListeners() {
         const newValue = (Math.random() * 2 + 1).toFixed(2); 
 
         await fetch('../backend/insert_data.php', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ valeur: parseFloat(newValue), adresse_mac_capteur: activeMac })
         });
 
@@ -552,22 +474,15 @@ function setupRangeListeners() {
         await updateHomeChart();
 
         if (counter % (updateInterval / 2000) === 0) {
-            await drawDailyCostChart(); 
-            await drawBreakdownCharts(); // Mise à jour lente des camemberts
+            const now = new Date();
+            if (toLocalISOString(currentViewDate) === toLocalISOString(now)) {
+                 await drawDailyCostChart(); 
+                 await drawCostPie();
+            }
+            await drawVolumePie();
         }
-
         counter++;
-
     }, 2000); 
-
 })();
 
-
-// ----- PWA (service worker) -----
-/*
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(console.warn);
-    });
-}
-*/
+/* PWA disabled */
