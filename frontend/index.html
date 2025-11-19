@@ -6,7 +6,7 @@
   <title>BREIZH4LINE</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
 
@@ -38,17 +38,6 @@
     <main class="content">
       <h2>Historique</h2>
 
-      <div class="mac-selector-container" style="margin-bottom: 12px;">
-          <label for="sensor-select-home">Filtrer par capteur :</label>
-          <select id="sensor-select-home" class="sensor-select-all">
-              <option value="ALL">Total (Tous les capteurs)</option>
-              <option value="00:1A:2B:3C:4D:01">Douche</option>
-              <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
-              <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
-              <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
-          </select>
-      </div>
-
       <div class="card kpi">
         <div class="date-row">
           <button class="chip" id="chip-start">Chargement...</button>
@@ -65,15 +54,25 @@
         </div>
       </div>
 
-      <div class="card chart-card">
-        <div class="card-title">
-            Courbe de Consommation
+      <div class="card chart-card" style="height: 420px;"> <div class="card-title">
+            Courbe
             <div class="range-selector" id="homeRangeSelector">
                 <button class="chip active" data-range="day">Jour</button>
                 <button class="chip" data-range="month">Mois</button>
                 <button class="chip" data-range="year">Année</button>
             </div>
         </div>
+
+        <div class="in-card-filter">
+            <select id="sensor-select-home" class="sensor-select-all">
+                <option value="ALL">Total (Tous les capteurs)</option>
+                <option value="00:1A:2B:3C:4D:01">Douche</option>
+                <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
+                <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
+                <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
+            </select>
+        </div>
+
         <canvas id="historyChart"></canvas>
       </div>
       
@@ -105,20 +104,8 @@
     <main class="content">
       <h2>Analyse des Coûts</h2>
 
-      <div class="mac-selector-container" style="margin-bottom: 12px;">
-          <label for="sensor-select-costs">Filtrer par capteur :</label>
-          <select id="sensor-select-costs" class="sensor-select-all">
-              <option value="ALL">Total (Tous les capteurs)</option>
-              <option value="00:1A:2B:3C:4D:01">Douche</option>
-              <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
-              <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
-              <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
-          </select>
-      </div>
-
-      <div class="card chart-card" style="height: 380px;">
-        <div class="card-title">
-          Coût
+      <div class="card chart-card" style="height: 440px;"> <div class="card-title">
+          Coût (<span id="currentPeriodLabel">Mois</span>)
           <div class="range-selector" id="costsRangeSelector">
               <button class="chip" data-range="week">Semaine</button>
               <button class="chip active" data-range="month">Mois</button>
@@ -126,9 +113,19 @@
           </div>
         </div>
         
-        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 8px;">
+        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
             <label for="costs-date-picker" style="margin-right: 8px; font-size: 14px; color: #64748b;">Voir :</label>
             <input type="date" id="costs-date-picker" class="date-picker-input">
+        </div>
+
+        <div class="in-card-filter">
+            <select id="sensor-select-costs" class="sensor-select-all">
+                <option value="ALL">Total (Tous les capteurs)</option>
+                <option value="00:1A:2B:3C:4D:01">Douche</option>
+                <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
+                <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
+                <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
+            </select>
         </div>
 
         <canvas id="dailyCostChart"></canvas>
@@ -168,6 +165,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="app.js?v=2"></script>
+  
+  <script src="app.js?v=4"></script>
 </body>
 </html>

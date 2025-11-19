@@ -24,20 +24,23 @@ body {
   background: var(--bg);
 }
 
-/* VUES */
+/* ========================================= */
+/* VUES (Container Principal) */
+/* ========================================= */
 .view {
   display: none;
   min-height: 100dvh;
   width: 100%;
-  max-width: 420px;
+  max-width: 420px; /* Mobile par défaut */
   margin: 0 auto;
   position: relative;
+  padding-bottom: 90px; /* Espace pour la nav */
 }
 .view.active {
   display: block;
 }
 
-/* SPLASH */
+/* SPLASH SCREEN */
 .splash-content {
   height: 100dvh;
   display: flex;
@@ -68,7 +71,7 @@ body {
   40% { transform: translateY(-8px); }
 }
 
-/* QUOTE */
+/* QUOTE SCREEN */
 .quote-content {
   height: 100dvh;
   display: flex;
@@ -87,6 +90,10 @@ body {
   font-size: 22px;
   line-height: 1.35;
 }
+
+/* ========================================= */
+/* ELEMENTS D'INTERFACE */
+/* ========================================= */
 
 /* TOPBAR */
 .topbar {
@@ -126,16 +133,16 @@ body {
 }
 .spacer { flex: 1; }
 
-/* CONTENT */
+/* CONTENT AREA */
 .content {
-  padding: 8px 16px 96px;
+  padding: 8px 16px 16px;
 }
 h2 {
   margin: 0 0 10px 4px;
   font-size: 20px;
 }
 
-/* CARD */
+/* CARDS */
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -144,7 +151,7 @@ h2 {
   margin-bottom: 14px;
 }
 
-/* KPI card */
+/* KPI CARD (Compteur) */
 .kpi .date-row {
   display: flex;
   gap: 10px;
@@ -158,8 +165,6 @@ h2 {
   border-radius: 12px;
   cursor: pointer;
 }
-
-/* CHART CARDS & KPI VALUE */
 .liters {
   display: flex;
   align-items: stretch;
@@ -175,11 +180,26 @@ h2 {
   color: #19aaff;
   font-weight: 700;
 }
+/* Widget Coût dans KPI */
+.units-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-bottom: 4px;
+}
+.liters .cost {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 4px;
+}
 
-/* Chart card (Hauteur fixée pour affichage correct) */
+/* CHART CARDS (Graphiques) */
 .chart-card {
   padding: 12px 12px 6px;
-  height: 380px; /* Hauteur augmentée pour inclure nav et axes */
+  /* Hauteur augmentée pour accomoder titre + filtre + graph */
+  height: 440px; 
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -202,7 +222,30 @@ h2 {
   padding: 0 8px;
 }
 
-/* SELECTEURS DE PLAGE (Jour/Mois/Année) */
+/* NOUVEAU : Filtre intégré à la carte */
+.in-card-filter {
+    padding: 0 8px 10px 8px;
+    width: 100%;
+}
+.in-card-filter select {
+    width: 100%;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.in-card-filter select:focus {
+    border-color: var(--primary);
+    background-color: #fff;
+}
+
+/* SÉLECTEURS DE PLAGE (Jour/Mois/Année) */
 .range-selector {
   display: flex;
   gap: 4px;
@@ -227,7 +270,7 @@ h2 {
   font-weight: 700;
 }
 
-/* NOUVEAU : Style du Date Picker (Sélecteur de date) */
+/* DATE PICKER */
 .date-picker-input {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -243,6 +286,21 @@ h2 {
 .date-picker-input:focus {
     border-color: var(--primary);
     background: #fff;
+}
+
+/* NAVIGATION TEMPORELLE (Flèches) */
+.nav-arrow {
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px 12px;
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.nav-arrow:hover {
+    background: #eef2ff;
 }
 
 /* BOTTOM NAV */
@@ -261,6 +319,7 @@ h2 {
   align-items: center;
   justify-content: space-around;
   padding: 0 16px;
+  z-index: 10;
 }
 .nav-btn {
   width: 44px;
@@ -353,17 +412,86 @@ canvas { display: block; width: 100%; }
   .bottom-nav { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 }
 
-/* WIDGET COÛT */
-.units-column {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-start;
-  padding-bottom: 4px;
-}
-.liters .cost {
-  color: var(--primary);
-  font-size: 18px;
-  font-weight: 700;
-  margin-top: 4px;
+
+/* ============================================================ */
+/* 🖥️ VERSION PC / DESKTOP (Écrans > 1024px) 🖥️ */
+/* ============================================================ */
+
+@media (min-width: 1024px) {
+
+  /* 1. Élargir la vue principale */
+  .view {
+    max-width: 1200px; /* Largeur standard PC */
+    margin: 0 auto;
+    padding-bottom: 80px;
+  }
+
+  /* 2. Transformer le contenu en Grille */
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 colonnes égales */
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* 3. Le titre prend toute la largeur */
+  .content h2 {
+    grid-column: 1 / -1;
+    font-size: 28px;
+    margin-bottom: 16px;
+    margin-top: 32px;
+  }
+
+  /* 4. La carte KPI prend toute la largeur */
+  .kpi {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px;
+  }
+  .kpi .date-row { margin-bottom: 0; }
+  .liters #litersValue { font-size: 96px; } 
+  .chip { padding: 12px 16px; font-size: 16px; }
+  .date-picker-input { padding: 8px 12px; font-size: 16px; }
+
+  /* 5. Les cartes de graphiques plus hautes */
+  .chart-card {
+    height: 500px; 
+  }
+
+  /* Ajustement des filtres pour PC */
+  .in-card-filter select {
+      max-width: 300px; /* Limite la largeur sur grand écran */
+  }
+  
+  /* 6. Barre de navigation en bas (Style Bureau) */
+  .bottom-nav {
+    max-width: 100%;
+    border-radius: 0;
+    bottom: 0;
+    height: 70px;
+    justify-content: center;
+    gap: 60px;
+    background: #fff;
+    border-top: 1px solid #eee;
+  }
+  
+  .notch { display: none; } 
+  
+  .nav-btn {
+      font-size: 24px;
+      width: 60px;
+      height: 60px;
+      transition: background 0.2s;
+      border-radius: 50%;
+  }
+  .nav-btn:hover {
+      background: #f0f0f0;
+  }
+
+  /* 7. Menu Latéral */
+  .side-menu {
+    max-width: 400px;
+  }
 }
