@@ -1,0 +1,70 @@
+<?php
+// backend/get_daily_costs.php
+header("Content-Type: application/json");
+include "config.php";
+
+$date_debut = $_GET['start'] ?? date('Y-m-d', strtotime('-7 days')) . ' 00:00:00';
+$date_fin = $_GET['end'] ?? date('Y-m-d') . ' 23:59:59';
+$mac = $_GET['mac'] ?? 'ALL'; 
+$grouping_type = $_GET['group_by_period'] ?? 'day';
+$prix_m3 = 2.25; 
+
+$mac_filter = '';
+$params = [$date_debut, $date_fin];
+
+if ($mac !== 'ALL') {
+    $mac_filter = " AND adresse_mac_capteur = ?";
+    $params[] = $mac;
+}
+
+// Définition de la formule de formatage de date
+if ($grouping_type === 'month') {
+    // Année/Mois (ex: '2024-05')
+    $date_format_sql = "DATE_FORMAT(date_mesure, '%Y-%m-01')";
+} else {
+    // Jour (ex: '2024-05-15')
+    $date_format_sql = "DATE(date_mesure)";
+}
+
+// Requête SQL sécurisée (On groupe par la formule, pas par l'alias)
+$sql = "
+    SELECT 
+        $date_format_sql as date_groupe,
+        SUM(valeur) AS volume_total_litres
+    FROM 
+        consommation
+    WHERE 
+        date_mesure BETWEEN ? AND ?
+        " . $mac_filter . "
+    GROUP BY 
+        $date_format_sql
+    ORDER BY
+        date_groupe ASC
+";
+
+try {
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $resultat = [];
+
+    foreach ($data as $row) {
+        $volume_m3 = $row['volume_total_litres'] / 1000.0;
+        $cout_total = $volume_m3 * $prix_m3;
+
+        $resultat[] = [
+            'jour' => $row['date_groupe'], 
+            'volume_litres' => round($row['volume_total_litres'], 0),
+            'cout_euros' => round($cout_total, 2)
+        ];
+    }
+
+    echo json_encode($resultat);
+
+} catch (PDOException $e) {
+    // En cas d'erreur SQL, on renvoie le message pour le débogage
+    http_response_code(500);
+    echo json_encode(["error" => $e->getMessage()]);
+}
+?>
