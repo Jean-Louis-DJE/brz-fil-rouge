@@ -6,7 +6,7 @@
   <title>BREIZH4LINE</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=1" />
 </head>
 <body>
 
@@ -38,17 +38,6 @@
     <main class="content">
       <h2>Historique</h2>
 
-      <div class="mac-selector-container" style="margin-bottom: 12px;">
-          <label for="sensor-select-home">Filtrer par capteur :</label>
-          <select id="sensor-select-home" class="sensor-select-all">
-              <option value="ALL">Total (Tous les capteurs)</option>
-              <option value="00:1A:2B:3C:4D:01">Douche</option>
-              <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
-              <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
-              <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
-          </select>
-      </div>
-
       <div class="card kpi">
         <div class="date-row">
           <button class="chip" id="chip-start">Chargement...</button>
@@ -65,15 +54,27 @@
         </div>
       </div>
 
-      <div class="card chart-card">
+      <div class="card chart-card" style="height: 420px;">
         <div class="card-title">
-            Courbe de Consommation
+            Courbe
             <div class="range-selector" id="homeRangeSelector">
                 <button class="chip active" data-range="day">Jour</button>
                 <button class="chip" data-range="month">Mois</button>
                 <button class="chip" data-range="year">Année</button>
             </div>
         </div>
+
+        <div class="in-card-filter">
+            <label for="sensor-select-home" class="sensor-label">Point d'eau :</label>
+            <select id="sensor-select-home" class="sensor-select-all">
+                <option value="ALL">Total (Tous les points d'eau)</option>
+                <option value="00:1A:2B:3C:4D:01">Douche</option>
+                <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
+                <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
+                <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
+            </select>
+        </div>
+
         <canvas id="historyChart"></canvas>
       </div>
       
@@ -83,14 +84,6 @@
       </div>
       
     </main>
-
-    <nav class="bottom-nav">
-      <button class="nav-btn" id="openMenu"><span>≡</span></button>
-      <button class="nav-btn"><span>🕒</span></button>
-      <div class="notch"></div>
-      <button class="nav-btn"><span>🖼️</span></button>
-      <button class="nav-btn"><span>★</span></button>
-    </nav>
   </section>
 
   <section id="view-costs" class="view">
@@ -105,20 +98,9 @@
     <main class="content">
       <h2>Analyse des Coûts</h2>
 
-      <div class="mac-selector-container" style="margin-bottom: 12px;">
-          <label for="sensor-select-costs">Filtrer par capteur :</label>
-          <select id="sensor-select-costs" class="sensor-select-all">
-              <option value="ALL">Total (Tous les capteurs)</option>
-              <option value="00:1A:2B:3C:4D:01">Douche</option>
-              <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
-              <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
-              <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
-          </select>
-      </div>
-
-      <div class="card chart-card" style="height: 380px;">
+      <div class="card chart-card" style="height: 440px;">
         <div class="card-title">
-          Coût
+          Coût (<span id="currentPeriodLabel">Mois</span>)
           <div class="range-selector" id="costsRangeSelector">
               <button class="chip" data-range="week">Semaine</button>
               <button class="chip active" data-range="month">Mois</button>
@@ -126,9 +108,20 @@
           </div>
         </div>
         
-        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 8px;">
+        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
             <label for="costs-date-picker" style="margin-right: 8px; font-size: 14px; color: #64748b;">Voir :</label>
             <input type="date" id="costs-date-picker" class="date-picker-input">
+        </div>
+
+        <div class="in-card-filter">
+            <label for="sensor-select-costs" class="sensor-label">Point d'eau :</label>
+            <select id="sensor-select-costs" class="sensor-select-all">
+                <option value="ALL">Total (Tous les points d'eau)</option>
+                <option value="00:1A:2B:3C:4D:01">Douche</option>
+                <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
+                <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
+                <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
+            </select>
         </div>
 
         <canvas id="dailyCostChart"></canvas>
@@ -140,27 +133,115 @@
       </div>
       
     </main>
-    
-    <nav class="bottom-nav">
-        <button class="nav-btn open-menu-btn"><span>≡</span></button>
-        <button class="nav-btn"><span>🕒</span></button>
-        <div class="notch"></div>
-        <button class="nav-btn"><span>🖼️</span></button>
-        <button class="nav-btn"><span>★</span></button>
-    </nav>
   </section>
 
+  <section id="view-profile" class="view">
+    <header class="topbar">
+      <button class="icon-btn open-menu-btn">≡</button>
+      <h2>Mon Profil</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="saveProfile()">💾</button> 
+    </header>
+  
+    <main class="content">
+      <div class="profile-header">
+        <div class="avatar-wrapper">
+          <img src="assets/avatar.png" id="profile-img-preview" class="big-avatar">
+          <input type="file" id="profile-input-file" accept="image/*" style="display: none;"> 
+          <div class="camera-icon">📷</div>
+        </div>
+      </div>
+  
+      <form id="profile-form" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label for="input-prenom">Prénom</label>
+          <input type="text" id="input-prenom" name="prenom" placeholder="Votre prénom">
+        </div>
+        
+        <div class="form-group">
+          <label for="input-nom">Nom</label>
+          <input type="text" id="input-nom" name="nom" placeholder="Votre nom">
+        </div>
+  
+        <div class="form-group">
+          <label for="input-habitudes">Mes habitudes de consommation</label>
+          <textarea id="input-habitudes" rows="5" placeholder="Ex: Je prends 2 douches par jour, j'ai un lave-vaisselle..."></textarea>
+          <small>Ces infos nous aident à mieux analyser votre consommation.</small>
+        </div>
+
+        <div class="form-group">
+          <label class="checkbox-label">
+            <input type="checkbox" id="input-sportif">
+            <span>Je suis sportif/sportive</span>
+          </label>
+        </div>
+
+        <div class="form-group">
+          <label for="input-departement">Département (Code)</label>
+          <input type="text" id="input-departement" placeholder="Ex: 29, 35, 56...">
+        </div>
+
+      </form>
+
+      <!-- ================================================== -->
+      <!-- == SECTION MEMBRES DU FOYER (AJOUT) == -->
+      <!-- ================================================== -->
+      <div class="card user-list-container">
+          <div class="user-list-header">
+              <h3>
+                  Membres du foyer (<span id="user-count">0</span>)
+              </h3>
+              <button onclick="addUser()" class="btn-primary" style="border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+                  + Ajouter
+              </button>
+          </div>
+          <ul id="user-list" style="margin: 0; padding: 0;">
+              <!-- La liste des utilisateurs sera insérée ici par JavaScript -->
+          </ul>
+      </div>
+    </main>
+  </section>
+
+  <!-- ================================================== -->
+  <!-- == NOUVELLE VUE : ALERTES ET CONSEILS == -->
+  <!-- ================================================== -->
+  <section id="view-alerts" class="view">
+    <header class="topbar">
+      <button class="icon-btn open-menu-btn">≡</button>
+      <h2>Alertes et Conseils</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="generateRecommendations()">🔄</button>
+    </header>
+
+    <main class="content">
+      <div class="card">
+        <div class="card-title" style="margin-bottom: 0;">
+          Période d'analyse
+        </div>
+        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
+          <label for="alerts-date-picker" style="margin-right: 8px; font-size: 14px; color: var(--muted);">Choisir une date :</label>
+          <input type="date" id="alerts-date-picker" class="date-picker-input">
+        </div>
+      </div>
+      <div id="recommendations-container">
+        <!-- Le contenu sera généré par JavaScript -->
+        <p style="text-align: center; color: var(--muted);">Choisissez une date et cliquez sur 🔄 pour analyser la consommation de la semaine correspondante.</p>
+      </div>
+    </main>
+  </section>
 
   <aside id="side-menu" class="side-menu">
     <div class="side-header">
-      <img src="assets/avatar.png" alt="Profil" class="avatar">
+      <img src="assets/avatar.png" alt="Profil" class="avatar" id="menu-avatar">
+      <h3 id="menu-username" style="margin:0 0 0 12px; font-size:18px;">Utilisateur</h3>
       <button id="btn-close-menu" class="close-btn" aria-label="Fermer">✕</button>
     </div>
     <nav class="side-list">
-      <a href="#" class="side-link active" onclick="goto(viewHome)">Accueil</a>
-      <a href="#" class="side-link" onclick="goto(viewCosts)">Coûts</a>
-      <a href="#" class="side-link">Alertes et conseils</a>
+      <a href="#" class="side-link active" data-target="view-home" onclick="goto(viewHome)">Accueil</a>
+      <a href="#" class="side-link" data-target="view-costs" onclick="goto(viewCosts)">Coûts</a>
+      <a href="#" class="side-link" data-target="view-alerts" onclick="goto(viewAlerts)">Alertes et conseils</a>
       <a href="#" class="side-link">Paramètres</a>
+      <a href="#" class="side-link" data-target="view-profile" onclick="goto(viewProfile)">Mon Profil</a> 
     </nav>
   </aside>
 
@@ -168,6 +249,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=1"></script>
 </body>
 </html>

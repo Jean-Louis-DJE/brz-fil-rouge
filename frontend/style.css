@@ -24,20 +24,38 @@ body {
   background: var(--bg);
 }
 
-/* VUES */
+/* ========================================= */
+/* VUES & ANIMATIONS FLUIDES */
+/* ========================================= */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .view {
   display: none;
   min-height: 100dvh;
   width: 100%;
-  max-width: 420px;
+  max-width: 420px; /* Mobile par défaut */
   margin: 0 auto;
   position: relative;
-}
-.view.active {
-  display: block;
+  /* Plus de barre de nav en bas, donc padding réduit */
+  padding-bottom: 20px; 
 }
 
-/* SPLASH */
+.view.active {
+  display: block;
+  animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* SPLASH SCREEN */
 .splash-content {
   height: 100dvh;
   display: flex;
@@ -68,7 +86,7 @@ body {
   40% { transform: translateY(-8px); }
 }
 
-/* QUOTE */
+/* QUOTE SCREEN */
 .quote-content {
   height: 100dvh;
   display: flex;
@@ -87,6 +105,10 @@ body {
   font-size: 22px;
   line-height: 1.35;
 }
+
+/* ========================================= */
+/* ELEMENTS D'INTERFACE */
+/* ========================================= */
 
 /* TOPBAR */
 .topbar {
@@ -126,16 +148,16 @@ body {
 }
 .spacer { flex: 1; }
 
-/* CONTENT */
+/* CONTENT AREA */
 .content {
-  padding: 8px 16px 96px;
+  padding: 8px 16px 16px;
 }
 h2 {
   margin: 0 0 10px 4px;
   font-size: 20px;
 }
 
-/* CARD */
+/* CARDS */
 .card {
   background: var(--card);
   border-radius: var(--radius);
@@ -144,7 +166,7 @@ h2 {
   margin-bottom: 14px;
 }
 
-/* KPI card */
+/* KPI CARD */
 .kpi .date-row {
   display: flex;
   gap: 10px;
@@ -158,8 +180,6 @@ h2 {
   border-radius: 12px;
   cursor: pointer;
 }
-
-/* CHART CARDS & KPI VALUE */
 .liters {
   display: flex;
   align-items: stretch;
@@ -175,11 +195,24 @@ h2 {
   color: #19aaff;
   font-weight: 700;
 }
+.units-column {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  padding-bottom: 4px;
+}
+.liters .cost {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 4px;
+}
 
-/* Chart card (Hauteur fixée pour affichage correct) */
+/* CHART CARDS */
 .chart-card {
   padding: 12px 12px 6px;
-  height: 380px; /* Hauteur augmentée pour inclure nav et axes */
+  height: 440px; 
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -202,7 +235,41 @@ h2 {
   padding: 0 8px;
 }
 
-/* SELECTEURS DE PLAGE (Jour/Mois/Année) */
+/* FILTRE INTÉGRÉ À LA CARTE */
+.in-card-filter {
+    padding: 0 8px 10px 8px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sensor-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.in-card-filter select {
+    flex-grow: 1;
+    width: auto;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.in-card-filter select:focus {
+    border-color: var(--primary);
+    background-color: #fff;
+}
+
+/* SÉLECTEURS DE PLAGE */
 .range-selector {
   display: flex;
   gap: 4px;
@@ -227,7 +294,7 @@ h2 {
   font-weight: 700;
 }
 
-/* NOUVEAU : Style du Date Picker (Sélecteur de date) */
+/* DATE PICKER */
 .date-picker-input {
     border: 1px solid #ddd;
     border-radius: 8px;
@@ -245,47 +312,18 @@ h2 {
     background: #fff;
 }
 
-/* BOTTOM NAV */
-.bottom-nav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 12px;
-  margin: 0 auto;
-  max-width: 420px;
-  height: 64px;
-  background: var(--card);
-  border-radius: 24px;
-  box-shadow: var(--shadow);
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  padding: 0 16px;
+/* NAV ARROWS */
+.nav-arrow {
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px 12px;
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
 }
-.nav-btn {
-  width: 44px;
-  height: 44px;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #0f172a;
-}
-.notch {
-  position: absolute;
-  top: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 92px;
-  height: 28px;
-  background: var(--bg);
-  border-bottom-left-radius: 48px;
-  border-bottom-right-radius: 48px;
-  box-shadow: 0 -4px 0 rgba(0,0,0,0.02);
-}
+.nav-arrow:hover { background: #eef2ff; }
 
 /* SIDE MENU */
 .side-menu {
@@ -349,21 +387,210 @@ h2 {
 /* CANVAS fix */
 canvas { display: block; width: 100%; }
 
-@supports (padding: max(0px)) {
-  .bottom-nav { padding-bottom: max(12px, env(safe-area-inset-bottom)); }
+
+/* ============================================================ */
+/* 🖥️ VERSION PC / DESKTOP (Écrans > 1024px) */
+/* ============================================================ */
+
+@media (min-width: 1024px) {
+
+  .view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 20px;
+  }
+
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .content h2 {
+    grid-column: 1 / -1;
+    font-size: 28px;
+    margin-bottom: 16px;
+    margin-top: 32px;
+  }
+  
+  .kpi {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 32px;
+  }
+  .kpi .date-row { margin-bottom: 0; }
+  .liters #litersValue { font-size: 96px; } 
+  .chip { padding: 12px 16px; font-size: 16px; }
+  .date-picker-input { padding: 8px 12px; font-size: 16px; }
+
+  .chart-card {
+    height: 500px; 
+  }
+
+  .in-card-filter select {
+      max-width: 300px;
+  }
+  
+  .side-menu { max-width: 400px; }
 }
 
-/* WIDGET COÛT */
-.units-column {
+/* ========================================= */
+/* STYLES PAGE PROFIL (AJOUTÉS) */
+/* ========================================= */
+
+.profile-header {
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-start;
-  padding-bottom: 4px;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
 }
-.liters .cost {
-  color: var(--primary);
+
+.avatar-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.big-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--card);
+  box-shadow: var(--shadow);
+}
+
+.camera-icon {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
-  font-weight: 700;
-  margin-top: 4px;
+  border: 2px solid var(--card);
 }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; }
+.form-group input, .form-group textarea {
+  width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 16px;
+}
+.form-group small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
+
+/* --- TOAST MESSAGE (Notification) --- */
+.toast {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4caf50; /* Vert pour Succès */
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+}
+
+/* ======================================= */
+/* == SECTION MEMBRES DU FOYER (PROFIL) == */
+/* ======================================= */
+
+.user-list-container {
+  margin-top: 30px;
+}
+
+.user-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.user-list-header h3 { margin: 0; font-size: 18px; }
+
+.user-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid #f1f5f9; list-style-type: none;
+}
+
+.user-info span:first-child { font-weight: 600; }
+.user-info span:last-child { font-size: 14px; color: var(--muted); margin-left: 8px; }
+.delete-user-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; }
+
+/* Style pour la case à cocher "sportif" */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+  accent-color: var(--primary); /* Donne la couleur primaire à la coche */
+}
+
+/* ======================================= */
+/* == SECTION ALERTES & CONSEILS == */
+/* ======================================= */
+
+.reco-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.reco-card h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reco-summary {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.reco-summary div span:first-child {
+  font-size: 24px;
+  font-weight: 700;
+  display: block;
+}
+.reco-summary div span.ideal { color: var(--primary); }
+.reco-summary div span.real { color: #f59e0b; } /* Jaune/Orange */
+.reco-summary div span:last-child { font-size: 12px; color: var(--muted); }
+
+.reco-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.reco-item:last-child { border-bottom: none; }
+.reco-item-name { font-weight: 600; }
+.reco-item-values { font-size: 14px; text-align: right; }
+.reco-item-values .real-value { font-weight: 600; }
+.reco-item-values .ideal-value { color: var(--muted); }

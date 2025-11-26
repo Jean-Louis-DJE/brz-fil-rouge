@@ -1,7 +1,7 @@
 const CACHE = 'breizh4line-v1';
 const ASSETS = [
   './',
-  './index.html',
+  './main.html',
   './style.css',
   './app.js',
   './manifest.json',
