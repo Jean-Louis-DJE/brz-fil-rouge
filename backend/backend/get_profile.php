@@ -3,44 +3,26 @@
  * get_profile.php
  * 
  * This script retrieves the user profile data.
- * In a real application, this data would come from a database.
- * For now, it returns a static JSON object with sample data.
  */
 
 // Set the content type of the response to JSON
 header('Content-Type: application/json');
+include 'config.php';
 
-// In a real application, you would:
-// 1. Connect to your database.
-// 2. Get the current user's ID (e.g., from a session).
-// 3. Query the database for that user's profile information.
-// 4. Query for the household members associated with that user.
+try {
+    // La variable $pdo est déjà dans le scope global grâce à l'include
+    $stmt = $pdo->prepare("SELECT * FROM utilisateur WHERE is_main_user = 1 LIMIT 1");
+    $stmt->execute();
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// For demonstration purposes, we'll use a hardcoded associative array.
-$profile_data = [
-    'prenom' => 'Jean',
-    'nom' => 'Dupont',
-    'habitudes' => 'Je prends une douche par jour et j\'utilise le lave-linge 3 fois par semaine.',
-    'sportif' => true,
-    'departement' => '35',
-    'avatar' => 'assets/avatar.png', // Path to the user's avatar
-    'membres' => [
-        [
-            'id' => 1,
-            'nom' => 'Jean Dupont',
-            'role' => 'Adulte'
-        ],
-        [
-            'id' => 2,
-            'nom' => 'Marie Dupont',
-            'role' => 'Adulte'
-        ],
-        [
-            'id' => 3,
-            'nom' => 'Lucas Dupont',
-            'role' => 'Enfant'
-        ]
-    ]
-];
-
-echo json_encode($profile_data);
+    if ($user) {
+        echo json_encode($user);
+    } else {
+        http_response_code(404);
+        echo json_encode(['error' => 'Utilisateur principal non trouvé.']);
+    }
+} catch (PDOException $e) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Erreur base de données: ' . $e->getMessage()]);
+}
+?>

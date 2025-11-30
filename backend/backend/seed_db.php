@@ -45,14 +45,27 @@ try {
     $pdo->exec("TRUNCATE TABLE contenu_activite");
     $pdo->exec("TRUNCATE TABLE activites");
     $pdo->exec("TRUNCATE TABLE utilisateur");
+    $pdo->exec("TRUNCATE TABLE capteurs"); // On vide aussi la table capteurs
     $pdo->exec("TRUNCATE TABLE consommation");
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
     echo "Tables vidées.\n";
 
     // --- ÉTAPE 2 : Insertion des données statiques (utilisateurs, activités, contenu) ---
     echo "Insertion des données de base (utilisateurs, activités, conseils)...\n";
-    include 'seed_data_static.php'; // On inclut un fichier séparé pour la clarté
+    include 'set_data_static.php'; // On inclut le fichier de données statiques
     echo "Données de base insérées.\n";
+
+    // --- NOUVELLE ÉTAPE : Insertion de la configuration des capteurs ---
+    echo "Insertion de la configuration des capteurs...\n";
+    $colors = ['#0b67ff', '#ff8c1a', '#10bffd', '#4caf50', '#f44336', '#9c27b0', '#ffeb3b', '#795548'];
+    $colorIndex = 0;
+    $stmt_capteurs = $pdo->prepare("INSERT INTO capteurs (adresse_mac, nom, couleur) VALUES (?, ?, ?)");
+    foreach (MAC_NAMES as $mac => $name) {
+        $stmt_capteurs->execute([$mac, $name, $colors[$colorIndex % count($colors)]]);
+        $colorIndex++;
+    }
+    echo "Configuration des capteurs insérée.\n";
+
 
     // Démarrer une transaction pour améliorer massivement les performances d'insertion
     $pdo->beginTransaction();

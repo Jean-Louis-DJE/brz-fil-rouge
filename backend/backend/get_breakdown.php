@@ -16,23 +16,25 @@ $mac_filter = '';
 $params = [$date_debut, $date_fin];
 
 if ($mac !== 'ALL') {
-    $mac_filter = " AND adresse_mac_capteur = ?";
+    $mac_filter = " AND sender_id = ?";
     $params[] = $mac;
 }
 
 // 1. Requête SQL: Total agrégé par capteur
 $sql = "
     SELECT 
-        adresse_mac_capteur,
-        SUM(valeur) AS volume_total_litres
+        sender_id,
+        SUM(value) AS volume_total_litres
     FROM 
-        consommation
+        sensor_data
     WHERE 
         date_mesure BETWEEN ? AND ?
         " . $mac_filter . "
     GROUP BY 
-        adresse_mac_capteur
+        sender_id
 ";
+
+global $pdo;
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -49,7 +51,7 @@ foreach ($data as $row) {
     $pourcentage = ($total_global_litres > 0) ? ($volume_litres / $total_global_litres) * 100 : 0;
 
     $resultat[] = [
-        'mac' => $row['adresse_mac_capteur'],
+        'mac' => $row['sender_id'],
         'volume_litres' => $volume_litres,
         'cout_euros' => round($cout_total, 2),
         'pourcentage' => round($pourcentage, 2)

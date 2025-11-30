@@ -12,7 +12,7 @@ try {
     $stmt = $pdo->query("
         SELECT adresse_mac FROM capteurs
         UNION
-        SELECT DISTINCT adresse_mac_capteur AS adresse_mac FROM consommation
+        SELECT DISTINCT sender_id AS adresse_mac FROM sensor_data
     ");
 
     // On utilise fetchAll avec PDO::FETCH_COLUMN pour obtenir un tableau simple ['mac1', 'mac2', ...]

@@ -7,9 +7,11 @@ $date_debut = $_GET['start'] ?? '1970-01-01 00:00:00';
 $date_fin = $_GET['end'] ?? '2038-01-01 23:59:59';
 
 // 1. Calculer le volume total REEL (ce qui est en BDD)
+global $pdo;
+
 $stmt = $pdo->prepare("
-    SELECT SUM(valeur) AS volume_total_litres
-    FROM consommation
+    SELECT SUM(value) AS volume_total_litres
+    FROM sensor_data
     WHERE date_mesure BETWEEN ? AND ?
 ");
 $stmt->execute([$date_debut, $date_fin]);

@@ -1,8 +1,8 @@
 <?php
 // Paramètres de connexion MySQL
 $host = "localhost";   // ou "127.0.0.1"
-$user = "pmauser";        // ton nom d’utilisateur MySQL
-$pass = "MotDePasse123";            // ton mot de passe MySQL
+$user = "root";        // ton nom d’utilisateur MySQL
+$pass = "";            // ton mot de passe MySQL
 $db   = "breizh4line"; // nom de ta base
 
 try {

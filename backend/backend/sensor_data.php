@@ -14,11 +14,18 @@ try {
     die("Erreur de connexion à la base : " . $e->getMessage());
 }
 
+function log_message($msg){
+        $logfile = '/var/log/sensor_log.log';
+        $line = "[" . date('Y-m-d H:i:s') . "] " . $msg . "\n";
+        file_put_contents($logfile, $line, FILE_APPEND | LOCK_EX);
+}
+
 // === Récupération des données envoyées ===
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // On récupère la valeur envoyée
     $value = isset($_POST['value']) ? intval($_POST['value']) : null;
-
+        log_message("\n\n [AFFICHEUR] valeur reçue : $value") ;
+        //echo   >> /var/log/apache2/access.log 2>&1;
     // On identifie l'expéditeur (au choix)
     // Option 1 : IP de l’appareil
     //$sender_id = $_SERVER['REMOTE_ADDR'];
@@ -34,10 +41,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // === Insertion dans la base ===
     try {
-        $stmt = $conn->prepare("INSERT INTO sensor_data (sender_id, value) VALUES (:sender_id, :value)");
+        $stmt = $conn->prepare("INSERT INTO sensor_data (sender_id, value, date_mesure) VALUES (:sender_id, :value, NOW())");
         $stmt->execute([
             ':sender_id' => $sender_id,
-            ':value' => $value
+            ':value' => $value,
+            // NOW() est géré directement par SQL, pas besoin de le lier ici.
         ]);
 
         http_response_code(200);

@@ -13,7 +13,7 @@ $mac_filter = '';
 $params = [$date_debut, $date_fin];
 
 if ($mac !== 'ALL') {
-    $mac_filter = " AND adresse_mac_capteur = ?";
+    $mac_filter = " AND sender_id = ?";
     $params[] = $mac;
 }
 
@@ -30,9 +30,9 @@ if ($grouping_type === 'month') {
 $sql = "
     SELECT 
         $date_format_sql as date_groupe,
-        SUM(valeur) AS volume_total_litres
+        SUM(value) AS volume_total_litres
     FROM 
-        consommation
+        sensor_data
     WHERE 
         date_mesure BETWEEN ? AND ?
         " . $mac_filter . "
@@ -43,6 +43,8 @@ $sql = "
 ";
 
 try {
+    global $pdo;
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
