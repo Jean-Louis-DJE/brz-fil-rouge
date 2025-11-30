@@ -97,11 +97,12 @@ try {
 
 
     // --- PHASE 2: Génération des données détaillées pour l'année en cours (jusqu'à aujourd'hui) ---
-    $today = new DateTime();
-    $currentYearPeriod = new DatePeriod($currentYearStartDate, new DateInterval('P1D'), (clone $today)->modify('+1 day'));
+    $today = new DateTime(); // Date du jour
+    $currentWeekStartDate = new DateTime('monday this week'); // Date de début de la semaine actuelle
+    $currentYearPeriod = new DatePeriod($currentYearStartDate, new DateInterval('P1D'), $currentWeekStartDate); // La période s'arrête au début de cette semaine
     $totalCurrentYearEntries = 0;
 
-    echo "Génération des données détaillées pour la semaine en cours...\n";
+    echo "Génération des données détaillées pour l'année en cours (jusqu'à la semaine dernière)...\n";
     foreach ($currentYearPeriod as $day) {
         // Ne pas générer de données pour le futur
         if ($day > $today) {

@@ -18,6 +18,11 @@ try {
     // On utilise fetchAll avec PDO::FETCH_COLUMN pour obtenir un tableau simple ['mac1', 'mac2', ...]
     $mac_addresses = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
+    // Sécurité supplémentaire : on filtre les valeurs vides ou invalides qui pourraient venir de la BDD
+    $mac_addresses = array_filter($mac_addresses, function($mac) {
+        return !empty($mac) && strlen($mac) > 5; // Garde uniquement les MAC non vides
+    });
+
     echo json_encode($mac_addresses);
 
 } catch (Exception $e) {

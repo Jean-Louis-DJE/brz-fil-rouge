@@ -19,19 +19,14 @@ $summary = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $volume_litres_reel = $summary['volume_total_litres'] ?? 0;
 
-// ----- MODIFICATION : AJOUT D'UNE VALEUR DE BASE POUR LA SIMULATION -----
-$valeur_de_base = 300; // On ajoute 300L
-$volume_litres_simule = $valeur_de_base + $volume_litres_reel;
-// --------------------------------------------------------------------
-
-// 2. Calculer le coût (basé sur le NOUVEAU total simulé)
+// 2. Calculer le coût (basé sur le total réel)
 $prix_m3 = 2.25; 
-$volume_m3 = $volume_litres_simule / 1000.0; // On utilise le total simulé
+$volume_m3 = $volume_litres_reel / 1000.0;
 $cout_total = $volume_m3 * $prix_m3;
 
 // 3. Renvoyer toutes les infos au format JSON
 echo json_encode([
-    'volume_total_litres' => $volume_litres_simule, // On renvoie le total simulé
+    'volume_total_litres' => $volume_litres_reel,
     'cout_total_euros' => round($cout_total, 2) 
 ]);
 ?>

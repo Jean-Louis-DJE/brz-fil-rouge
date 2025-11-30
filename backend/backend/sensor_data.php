@@ -1,18 +1,6 @@
 <?php
-// === Configuration base de données ===
-$host = "localhost";       // ou adresse du serveur MySQL
-$dbname = "breizh4line";
-$username = "pmauser";        // utilisateur MySQL
-$password = "MotDePasse123";            // mot de passe MySQL
-
-// === Connexion à la base ===
-try {
-    $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch (PDOException $e) {
-    http_response_code(500);
-    die("Erreur de connexion à la base : " . $e->getMessage());
-}
+// Utilise la configuration centralisée
+include 'config.php';
 
 function log_message($msg){
         $logfile = '/var/log/sensor_log.log';
@@ -41,7 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     // === Insertion dans la base ===
     try {
-        $stmt = $conn->prepare("INSERT INTO sensor_data (sender_id, value, date_mesure) VALUES (:sender_id, :value, NOW())");
+        // La variable $pdo vient de config.php
+        $stmt = $pdo->prepare("INSERT INTO sensor_data (sender_id, value, date_mesure) VALUES (:sender_id, :value, NOW())");
         $stmt->execute([
             ':sender_id' => $sender_id,
             ':value' => $value,

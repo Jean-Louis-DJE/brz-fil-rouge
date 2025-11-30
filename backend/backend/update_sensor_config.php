@@ -18,23 +18,22 @@ $colorIndex = 0;
 try {
     $pdo->beginTransaction();
 
-    // On supprime l'ancienne config pour la remplacer
-    $pdo->exec("DELETE FROM capteurs");
-
     $stmt = $pdo->prepare(
-        "INSERT INTO capteurs (adresse_mac, nom, couleur) VALUES (:mac, :nom, :couleur)"
+        "INSERT INTO capteurs (adresse_mac, nom, couleur) VALUES (:mac, :nom, :couleur)
+         ON DUPLICATE KEY UPDATE nom = :nom, couleur = :couleur"
     );
 
     foreach ($input as $sensor) {
         $mac = $sensor['mac'];
         $name = trim($sensor['name']);
 
-        // On n'enregistre que les capteurs qui ont un nom
+        // On n'enregistre ou ne met à jour que les capteurs qui ont un nom
         if (!empty($name)) {
+            $color = $colors[$colorIndex % count($colors)];
             $stmt->execute([
                 ':mac' => $mac,
                 ':nom' => $name,
-                ':couleur' => $colors[$colorIndex % count($colors)] // Attribution cyclique d'une couleur
+                ':couleur' => $color
             ]);
             $colorIndex++;
         }
