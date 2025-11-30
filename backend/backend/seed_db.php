@@ -46,7 +46,7 @@ try {
     $pdo->exec("TRUNCATE TABLE activites");
     $pdo->exec("TRUNCATE TABLE utilisateur");
     $pdo->exec("TRUNCATE TABLE capteurs"); // On vide aussi la table capteurs
-    $pdo->exec("TRUNCATE TABLE consommation");
+    $pdo->exec("TRUNCATE TABLE sensor_data");
     $pdo->exec("SET FOREIGN_KEY_CHECKS = 1;");
     echo "Tables vidées.\n";
 
@@ -70,13 +70,13 @@ try {
     // Démarrer une transaction pour améliorer massivement les performances d'insertion
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare("INSERT INTO consommation (valeur, date_mesure, adresse_mac_capteur) VALUES (?, ?, ?)");
+    $stmt = $pdo->prepare("INSERT INTO sensor_data (value, date_mesure, sender_id) VALUES (?, ?, ?)");
 
-    // --- PHASE 1: Génération des données historiques (2 ans jusqu'à la semaine dernière) ---
-    $historyStartDate = new DateTime('1 year ago'); // Réduit à 1 an pour aller plus vite
-    $currentWeekStartDate = new DateTime('monday this week');
+    // --- PHASE 1: Génération des données historiques (2 ans jusqu'au début de l'année en cours) ---
+    $historyStartDate = new DateTime('2 years ago');
+    $currentYearStartDate = new DateTime('first day of january this year');
     
-    $period = new DatePeriod($historyStartDate, new DateInterval('P1D'), $currentWeekStartDate);
+    $period = new DatePeriod($historyStartDate, new DateInterval('P1D'), $currentYearStartDate);
     $totalHistoricEntries = 0;
 
     echo "Génération des données historiques...\n";
@@ -96,13 +96,13 @@ try {
     echo "$totalHistoricEntries entrées historiques générées.\n";
 
 
-    // --- PHASE 2: Génération des données détaillées pour la semaine en cours ---
+    // --- PHASE 2: Génération des données détaillées pour l'année en cours (jusqu'à aujourd'hui) ---
     $today = new DateTime();
-    $currentWeekPeriod = new DatePeriod($currentWeekStartDate, new DateInterval('P1D'), (clone $today)->modify('+1 day'));
-    $totalCurrentWeekEntries = 0;
+    $currentYearPeriod = new DatePeriod($currentYearStartDate, new DateInterval('P1D'), (clone $today)->modify('+1 day'));
+    $totalCurrentYearEntries = 0;
 
     echo "Génération des données détaillées pour la semaine en cours...\n";
-    foreach ($currentWeekPeriod as $day) {
+    foreach ($currentYearPeriod as $day) {
         // Ne pas générer de données pour le futur
         if ($day > $today) {
             continue;
@@ -135,17 +135,17 @@ try {
             
             foreach ($macData as $mac => $totalLiters) {
                 $stmt->execute([$totalLiters, $eventDate->format('Y-m-d H:i:s'), $mac]);
-                $totalCurrentWeekEntries++;
+                $totalCurrentYearEntries++;
             }
         }
     }
-    echo "$totalCurrentWeekEntries entrées détaillées générées pour la semaine en cours.\n";
+    echo "$totalCurrentYearEntries entrées détaillées générées pour l'année en cours.\n";
 
     // Valider la transaction : toutes les données sont insérées d'un coup
     $pdo->commit();
 
 
-    $total = $totalHistoricEntries + $totalCurrentWeekEntries;
+    $total = $totalHistoricEntries + $totalCurrentYearEntries;
     echo "\nTerminé ! $total enregistrements ont été insérés dans la base de données.\n";
     
     // Renvoyer une réponse JSON de succès
