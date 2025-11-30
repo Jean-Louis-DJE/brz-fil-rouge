@@ -115,9 +115,13 @@
           </div>
         </div>
         
-        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
-            <label for="costs-date-picker" style="margin-right: 8px; font-size: 14px; color: #64748b;">Voir :</label>
-            <input type="date" id="costs-date-picker" class="date-picker-input">
+        <!-- NOUVEAU: Sélecteur de période unifié -->
+        <div class="in-card-filter" style="justify-content: center;">
+            <div id="costsDateSelector" style="display: flex; align-items: center; gap: 8px;">
+                <button id="prevPeriodCostsBtn" class="nav-arrow">&lt;</button>
+                <input type="text" id="costsDatePicker" class="date-picker-input" readonly>
+                <button id="nextPeriodCostsBtn" class="nav-arrow">&gt;</button>
+            </div>
         </div>
 
         <div class="in-card-filter">

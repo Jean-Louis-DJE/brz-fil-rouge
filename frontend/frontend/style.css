@@ -307,6 +307,11 @@ h2 {
     cursor: pointer;
     font-size: 14px;
 }
+.date-picker-input[type="month"],
+.date-picker-input[type="number"] {
+    text-align: center;
+    min-width: 130px; /* Assure une largeur minimale pour la lisibilité */
+}
 .date-picker-input:focus {
     border-color: var(--primary);
     background: #fff;

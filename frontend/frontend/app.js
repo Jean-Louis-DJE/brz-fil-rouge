@@ -91,6 +91,9 @@ function closeMenu() { sideMenu.classList.remove('open'); overlay.classList.remo
 document.querySelectorAll('#btn-menu, #btn-menu-costs, #openMenu, .open-menu-btn').forEach(btn => {
     btn.addEventListener('click', openMenu);
 });
+
+btnClose?.addEventListener('click', closeMenu);
+
 // --- FONCTION UTILITAIRE D'AFFICHAGE (Notification) ---
 function showNotification(message, isError = false) {
     const toast = document.getElementById('toast-message') || document.createElement('div');
@@ -202,9 +205,8 @@ function saveActivity() {
         goalInputGroupToHide = goalInput.closest('.form-group');
 
     } else if ((activity === 'douche_courte' || activity === 'douche_longue') && showerGoalInput.value) {
-        // Pour la douche, l'objectif est en minutes, on le convertit en litres (base: 10L/min avec pommeau éco)
-        goalValue = parseFloat(showerGoalInput.value); // On garde la valeur en minutes
-        goalName = `Douche (${goalValue} min)`;
+        goalValue = parseFloat(showerGoalInput.value); // La valeur est maintenant en Litres
+        goalName = `Prochaine Douche`;
         tipsContainer = showerTipsContainer;
         goalInputGroupToHide = showerGoalInput.closest('.form-group');
 
@@ -220,7 +222,7 @@ function saveActivity() {
         const objectiveData = {
             name: goalName,
             target: goalValue,
-            unit: (activity.includes('douche')) ? 'min' : 'L'
+            unit: 'L' // Tous les objectifs sont maintenant en Litres
         };
 
         // On envoie l'objectif au serveur
@@ -254,10 +256,7 @@ function saveActivity() {
             goalInputGroupToHide.style.display = 'none';
         }
         
-        let notificationMessage = `Objectif "${goalName}" fixé à ${goalValue} L !`;
-        if (activity.includes('douche')) {
-            notificationMessage = `Objectif "Douche" fixé à ${goalValue} minutes !`;
-        }
+        const notificationMessage = `Objectif "${goalName}" fixé à ${goalValue} L !`;
         showNotification(notificationMessage);
 
         // On ne ferme PAS la modale pour laisser l'utilisateur lire les conseils.
@@ -450,24 +449,6 @@ function calculateDateRange(range, referenceDate = new Date()) {
     return { start: `${startDate} 00:00:00`, end: `${endDate} 23:59:59`, labelObj: { start: startDate, end: endDate } };
 }
 
-function updatePeriodDisplay() {
-    const labelEl = document.getElementById('currentPeriodLabel');
-    if (!labelEl) return;
-
-    if (costsRange === 'year') {
-        labelEl.textContent = currentViewDate.getFullYear();
-    } else if (costsRange === 'month') {
-        labelEl.textContent = currentViewDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-    } else if (costsRange === 'week') {
-        const { labelObj } = calculateDateRange('week', currentViewDate);
-        const s = new Date(labelObj.start);
-        const e = new Date(labelObj.end);
-        labelEl.textContent = `${s.getDate()} ${s.toLocaleDateString('fr-FR', {month:'short'})} - ${e.getDate()} ${e.toLocaleDateString('fr-FR', {month:'short'})}`;
-    } else {
-        labelEl.textContent = "En cours";
-    }
-}
-
 
 // ==========================================
 // 5. LOGIQUE DES GRAPHIQUES
@@ -491,7 +472,11 @@ async function fetchData(start, end, grouping) {
         
         return json.map(d => {
             let label;
-            if (groupByType === 'month') label = new Date(d.date_mesure).toLocaleDateString('fr-FR', { month:'short', year:'2-digit' });
+            if (groupByType === 'month') {
+                // Si la vue est 'year', on affiche juste le mois. Sinon (vue 'month'), on affiche jour+mois.
+                const options = (grouping === 'year') ? { month:'short' } : { day:'numeric', month:'short' };
+                label = new Date(d.date_mesure).toLocaleDateString('fr-FR', options);
+            }
             else if (groupByType === 'day') label = new Date(d.date_mesure).toLocaleDateString('fr-FR', { day:'numeric', month:'short' });
             else label = new Date(d.date_mesure).toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
             return { x: label, y: parseFloat(d.valeur) };
@@ -695,10 +680,6 @@ async function drawPie(canvasId, start, end, isVolume) {
 // ==========================================
 
 function setupRangeListeners() {
-    const homeDateSelector = document.getElementById('homeDateSelector');
-    const homeDatePicker = document.getElementById('homeDatePicker');
-    const prevDayHomeBtn = document.getElementById('prevDayHome');
-    const nextDayHomeBtn = document.getElementById('nextDayHome');
 
     // 1. Accueil
     document.getElementById('homeRangeSelector').addEventListener('click', (e) => {
@@ -707,19 +688,28 @@ function setupRangeListeners() {
             e.target.classList.add('active');
             homeRange = e.target.getAttribute('data-range');
 
-            // Affiche ou cache le sélecteur de date
-            if (homeRange === 'day') {
-                homeDateSelector.style.display = 'flex';
-            } else {
+            // NOUVEAU: Adapter le type de l'input de date
+            if (homeRange === 'month') {
+                homeDatePicker.type = 'month';
+            } else if (homeRange === 'year') {
+                homeDatePicker.type = 'number';
+            } else { // 'day'
+                homeDatePicker.type = 'date';
+            }
+
+            // Affiche ou cache le sélecteur de date en fonction de la vue
+            if (homeRange === 'week') {
                 homeDateSelector.style.display = 'none';
+            } else {
+                homeDateSelector.style.display = 'flex';
             }
 
             // Réinitialise la date à "aujourd'hui" si on quitte la vue 'jour' et y revient
-            if (homeRange !== 'day') {
+            if (homeRange === 'week') {
                 homeViewDate = new Date();
-                homeDatePicker.value = toLocalISOString(homeViewDate);
             }
 
+            updateHomePeriodDisplay(); // Mettre à jour l'affichage de la période
             updateHomeChart();
             drawVolumePie(); 
         }
@@ -732,42 +722,91 @@ function setupRangeListeners() {
             e.target.classList.add('active');
             costsRange = e.target.getAttribute('data-range');
             
-            updatePeriodDisplay();
+            updateCostsPeriodDisplay();
             drawDailyCostChart();
             drawCostPie(); 
         }
     });
     
-    // 3. Date Picker
-    const datePicker = document.getElementById('costs-date-picker');
-    if (datePicker) {
-        datePicker.value = toLocalISOString(new Date());
-        datePicker.addEventListener('change', (e) => {
-            const [y, m, d] = e.target.value.split('-');
-            currentViewDate = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-            updatePeriodDisplay();
+    // 3. Date Picker Coûts (NOUVELLE LOGIQUE)
+    const costsDatePicker = document.getElementById('costsDatePicker');
+    const prevPeriodCostsBtn = document.getElementById('prevPeriodCostsBtn');
+    const nextPeriodCostsBtn = document.getElementById('nextPeriodCostsBtn');
+
+    if (costsDatePicker) {
+        updateCostsPeriodDisplay(); // Affichage initial
+
+        // Le picker de date n'est pas modifiable directement, on utilise les flèches
+        costsDatePicker.readOnly = true; 
+
+        prevPeriodCostsBtn.addEventListener('click', () => {
+            if (costsRange === 'week') currentViewDate.setDate(currentViewDate.getDate() - 7);
+            else if (costsRange === 'month') currentViewDate.setMonth(currentViewDate.getMonth() - 1);
+            else if (costsRange === 'year') currentViewDate.setFullYear(currentViewDate.getFullYear() - 1);
+            
+            updateCostsPeriodDisplay();
+            drawDailyCostChart();
+            drawCostPie();
+        });
+
+        nextPeriodCostsBtn.addEventListener('click', () => {
+            if (costsRange === 'week') currentViewDate.setDate(currentViewDate.getDate() + 7);
+            else if (costsRange === 'month') currentViewDate.setMonth(currentViewDate.getMonth() + 1);
+            else if (costsRange === 'year') currentViewDate.setFullYear(currentViewDate.getFullYear() + 1);
+
+            updateCostsPeriodDisplay();
             drawDailyCostChart();
             drawCostPie();
         });
     }
 
     // 3b. Date Picker Accueil
+    const homeDateSelector = document.getElementById('homeDateSelector');
+    const homeDatePicker = document.getElementById('homeDatePicker');
+    const prevDayHomeBtn = document.getElementById('prevDayHome');
+    const nextDayHomeBtn = document.getElementById('nextDayHome');
+
     if (homeDatePicker) {
         homeDatePicker.value = toLocalISOString(homeViewDate);
+        updateHomePeriodDisplay(); // Affichage initial
+
         homeDatePicker.addEventListener('change', (e) => {
-            homeViewDate = new Date(e.target.value);
+            if (homeRange === 'month') {
+                const [year, month] = e.target.value.split('-');
+                homeViewDate = new Date(year, month - 1, 1);
+            } else if (homeRange === 'year') {
+                homeViewDate.setFullYear(parseInt(e.target.value, 10));
+            } else { // 'day'
+                homeViewDate = new Date(e.target.value);
+            }
+            updateHomePeriodDisplay();
             updateHomeChart();
         });
+
         prevDayHomeBtn.addEventListener('click', () => {
-            homeViewDate.setDate(homeViewDate.getDate() - 1);
-            homeDatePicker.value = toLocalISOString(homeViewDate);
+            if (homeRange === 'day') {
+                homeViewDate.setDate(homeViewDate.getDate() - 1);
+            } else if (homeRange === 'month') {
+                homeViewDate.setMonth(homeViewDate.getMonth() - 1);
+            } else if (homeRange === 'year') {
+                homeViewDate.setFullYear(homeViewDate.getFullYear() - 1);
+            }
+            updateHomePeriodDisplay();
             updateHomeChart();
         });
+
         nextDayHomeBtn.addEventListener('click', () => {
-            homeViewDate.setDate(homeViewDate.getDate() + 1);
-            homeDatePicker.value = toLocalISOString(homeViewDate);
+            if (homeRange === 'day') {
+                homeViewDate.setDate(homeViewDate.getDate() + 1);
+            } else if (homeRange === 'month') {
+                homeViewDate.setMonth(homeViewDate.getMonth() + 1);
+            } else if (homeRange === 'year') {
+                homeViewDate.setFullYear(homeViewDate.getFullYear() + 1);
+            }
+            updateHomePeriodDisplay();
             updateHomeChart();
         });
+
         homeDateSelector.style.display = 'flex'; // Afficher par défaut car la vue initiale est 'jour'
     }
     
@@ -778,6 +817,40 @@ function setupRangeListeners() {
             setSelectedMac(newMac);
         });
     });
+}
+
+function updateHomePeriodDisplay() {
+    const labelEl = document.getElementById('homeDatePicker');
+    if (!labelEl) return;
+
+    if (homeRange === 'year') {
+        labelEl.type = 'number';
+        labelEl.value = homeViewDate.getFullYear(); // Affiche l'année
+    } else if (homeRange === 'month') {
+        labelEl.type = 'month';
+        labelEl.value = `${homeViewDate.getFullYear()}-${String(homeViewDate.getMonth() + 1).padStart(2, '0')}`; // Format YYYY-MM
+    } else { // 'day'
+        labelEl.type = 'date';
+        labelEl.value = toLocalISOString(homeViewDate);
+    }
+}
+
+function updateCostsPeriodDisplay() {
+    const labelEl = document.getElementById('costsDatePicker');
+    if (!labelEl) return;
+
+    if (costsRange === 'year') {
+        labelEl.value = currentViewDate.getFullYear();
+    } else if (costsRange === 'month') {
+        labelEl.value = currentViewDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+    } else if (costsRange === 'week') {
+        const { labelObj } = calculateDateRange('week', currentViewDate);
+        const s = new Date(labelObj.start);
+        const e = new Date(labelObj.end);
+        const startMonth = s.toLocaleDateString('fr-FR', { month: 'short' });
+        const endMonth = e.toLocaleDateString('fr-FR', { month: 'short' });
+        labelEl.value = `${s.getDate()} ${startMonth} - ${e.getDate()} ${endMonth}`;
+    }
 }
 
 function setSelectedMac(newMac) {
@@ -983,6 +1056,31 @@ const CONSO_MOYENNE_DEPARTEMENT = {
 };
 
 /**
+ * Noms des départements français pour l'affichage.
+ */
+const DEPARTEMENTS_NOMS = {
+    '01': 'Ain', '02': 'Aisne', '03': 'Allier', '04': 'Alpes-de-Haute-Provence', '05': 'Hautes-Alpes',
+    '06': 'Alpes-Maritimes', '07': 'Ardèche', '08': 'Ardennes', '09': 'Ariège', '10': 'Aube',
+    '11': 'Aude', '12': 'Aveyron', '13': 'Bouches-du-Rhône', '14': 'Calvados', '15': 'Cantal',
+    '16': 'Charente', '17': 'Charente-Maritime', '18': 'Cher', '19': 'Corrèze', '2A': 'Corse-du-Sud',
+    '2B': 'Haute-Corse', '21': 'Côte-d\'Or', '22': 'Côtes-d\'Armor', '23': 'Creuse', '24': 'Dordogne',
+    '25': 'Doubs', '26': 'Drôme', '27': 'Eure', '28': 'Eure-et-Loir', '29': 'Finistère', '30': 'Gard',
+    '31': 'Haute-Garonne', '32': 'Gers', '33': 'Gironde', '34': 'Hérault', '35': 'Ille-et-Vilaine',
+    '36': 'Indre', '37': 'Indre-et-Loire', '38': 'Isère', '39': 'Jura', '40': 'Landes', '41': 'Loir-et-Cher',
+    '42': 'Loire', '43': 'Haute-Loire', '44': 'Loire-Atlantique', '45': 'Loiret', '46': 'Lot', '47': 'Lot-et-Garonne',
+    '48': 'Lozère', '49': 'Maine-et-Loire', '50': 'Manche', '51': 'Marne', '52': 'Haute-Marne', '53': 'Mayenne',
+    '54': 'Meurthe-et-Moselle', '55': 'Meuse', '56': 'Morbihan', '57': 'Moselle', '58': 'Nièvre', '59': 'Nord',
+    '60': 'Oise', '61': 'Orne', '62': 'Pas-de-Calais', '63': 'Puy-de-Dôme', '64': 'Pyrénées-Atlantiques', '65': 'Hautes-Pyrénées',
+    '66': 'Pyrénées-Orientales', '67': 'Bas-Rhin', '68': 'Haut-Rhin', '69': 'Rhône', '70': 'Haute-Saône',
+    '71': 'Saône-et-Loire', '72': 'Sarthe', '73': 'Savoie', '74': 'Haute-Savoie', '75': 'Paris', '76': 'Seine-Maritime',
+    '77': 'Seine-et-Marne', '78': 'Yvelines', '79': 'Deux-Sèvres', '80': 'Somme', '81': 'Tarn', '82': 'Tarn-et-Garonne',
+    '83': 'Var', '84': 'Vaucluse', '85': 'Vendée', '86': 'Vienne', '87': 'Haute-Vienne', '88': 'Vosges', '89': 'Yonne',
+    '90': 'Territoire de Belfort', '91': 'Essonne', '92': 'Hauts-de-Seine', '93': 'Seine-Saint-Denis',
+    '94': 'Val-de-Marne', '95': 'Val-d\'Oise', '971': 'Guadeloupe', '972': 'Martinique', '973': 'Guyane',
+    '974': 'La Réunion', '976': 'Mayotte'
+};
+
+/**
  * Répartition de la consommation idéale par poste, adaptée aux capteurs de l'application.
  * Source: Données utilisateur.
  * - Douche = Bains-douches (39%)
@@ -1073,16 +1171,28 @@ async function generateRecommendations() {
         const consoReelleParPoste = {}; // ex: { 'Douche': 150, 'Cuisine': 80 }
         realBreakdown.forEach(item => {
             const volume = parseFloat(item.volume_litres);
-            const nomPoste = macNames[item.mac] || 'Inconnu';
+            const nomPoste = (sensorConfig[item.mac] && sensorConfig[item.mac].name) || 'Inconnu';
             totalConsoReelleSemaine += volume;
             consoReelleParPoste[nomPoste] = volume;
         });
 
         // 4. Construire et afficher le HTML
         let html = (container.innerHTML.includes('warning-color') ? container.innerHTML : ''); // Conserve le message d'avertissement s'il existe
+        
+        const nbMembres = usersData.users.length;
+        const s = nbMembres > 1 ? 's' : ''; // Pour le pluriel de "personne"
+        let infoText;
+        if (departement) {
+            const nomDepartement = DEPARTEMENTS_NOMS[departement] || `Département`;
+            infoText = `<p class="reco-info-text">Consommation de référence pour un foyer de ${nbMembres} personne${s} vivant dans ${nomDepartement} (${departement}).</p>`;
+        } else {
+            infoText = `<p class="reco-info-text">Consommation de référence pour un foyer de ${nbMembres} personne${s} (basée sur la moyenne nationale).</p>`;
+        }
+
         html += `
             <div class="card">
                 <h3>📊 Bilan de la semaine</h3>
+                ${infoText}
                 <div class="reco-summary">
                     <div>
                         <span class="ideal">${Math.round(totalConsoIdealeSemaine)} L</span>
@@ -1354,7 +1464,7 @@ async function saveSensorConfig() {
     await loadObjectives(); // NOUVEAU: Charger les objectifs depuis la BDD
     // renderObjectives(); // Cet appel est maintenant dans loadObjectives()
 
-    updatePeriodDisplay();
+    updateCostsPeriodDisplay();
 
     try {
         await updateDashboard();
