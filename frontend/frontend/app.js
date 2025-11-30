@@ -1484,6 +1484,8 @@ async function saveSensorConfig() {
 
     // let counter = 0;
     // const updateInterval = 60000; 
+    // --- NOUVEAU : Rafraîchissement automatique des données ---
+    const REALTIME_UPDATE_INTERVAL = 1000; // en millisecondes (1 seconde pour plus de réactivité)
 
     // setInterval(async () => {
     //     const activeMac = simulatedMacs[Math.floor(Math.random() * simulatedMacs.length)];
@@ -1507,6 +1509,18 @@ async function saveSensorConfig() {
     //     }
     //     counter++;
     // }, 2000); 
+    setInterval(async () => {
+        // On ne met à jour que si l'utilisateur est sur la page d'accueil
+        if (viewHome.classList.contains('active')) {
+            console.log("Rafraîchissement automatique des données...");
+            
+            // Met à jour le gros compteur (KPI)
+            await updateDashboard(); 
+            
+            // Met à jour le graphique principal
+            await updateHomeChart();
+        }
+    }, REALTIME_UPDATE_INTERVAL);
 })();
 
 /* PWA disabled */
