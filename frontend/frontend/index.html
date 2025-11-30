@@ -6,7 +6,7 @@
   <title>BREIZH4LINE</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="style.css?v=1" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -75,6 +75,13 @@
             </select>
         </div>
 
+        <!-- NOUVEAU: Sélecteur de date pour la vue "Jour" -->
+        <div class="in-card-filter" id="homeDateSelector" style="display: flex; padding-top: 8px;">
+            <span class="sensor-label">Date :</span>
+            <button class="nav-arrow" id="prevDayHome">&lt;</button>
+            <input type="date" id="homeDatePicker" class="date-picker-input">
+            <button class="nav-arrow" id="nextDayHome">&gt;</button>
+        </div>
         <canvas id="historyChart"></canvas>
       </div>
       
@@ -208,24 +215,66 @@
   <section id="view-alerts" class="view">
     <header class="topbar">
       <button class="icon-btn open-menu-btn">≡</button>
-      <h2>Alertes et Conseils</h2>
+      <h2>Analyse et Objectifs</h2>
       <div class="spacer"></div>
       <button class="icon-btn" onclick="generateRecommendations()">🔄</button>
     </header>
 
-    <main class="content">
-      <div class="card">
-        <div class="card-title" style="margin-bottom: 0;">
-          Période d'analyse
+    <main class="content" id="analysis-content">
+      <div class="analysis-grid">
+        <!-- COLONNE DE GAUCHE -->
+        <div class="analysis-main-column">
+          <!-- WIDGET 1 : Période d'analyse -->
+          <div class="card" id="analysis-period-card">
+            <div class="card-title" style="margin-bottom: 0;">
+              Période d'analyse
+            </div>
+            <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
+              <label for="alerts-date-picker" style="margin-right: 8px; font-size: 14px; color: var(--muted);">Choisir une date :</label>
+              <input type="date" id="alerts-date-picker" class="date-picker-input">
+            </div>
+          </div>
+          <!-- WIDGET 2 : Bilan et Analyse -->
+          <div id="recommendations-container">
+            <p style="text-align: center; color: var(--muted);">Choisissez une date et cliquez sur 🔄 pour analyser la consommation de la semaine correspondante.</p>
+          </div>
         </div>
-        <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
-          <label for="alerts-date-picker" style="margin-right: 8px; font-size: 14px; color: var(--muted);">Choisir une date :</label>
-          <input type="date" id="alerts-date-picker" class="date-picker-input">
+        <!-- COLONNE DE DROITE -->
+        <div class="analysis-side-column">
+          <div class="card" id="objectives-container-card">
+            <h3 class="card-title" style="margin-bottom: 15px;">🎯 Mes Objectifs</h3>
+            <ul id="objectives-list" style="margin: 0; padding: 0; list-style-type: none;"></ul>
+          </div>
         </div>
       </div>
-      <div id="recommendations-container">
-        <!-- Le contenu sera généré par JavaScript -->
-        <p style="text-align: center; color: var(--muted);">Choisissez une date et cliquez sur 🔄 pour analyser la consommation de la semaine correspondante.</p>
+    </main>
+  </section>
+
+  <!-- ================================================== -->
+  <!-- == NOUVELLE VUE : PARAMÈTRES == -->
+  <!-- ================================================== -->
+  <section id="view-settings" class="view">
+    <header class="topbar">
+      <button class="icon-btn open-menu-btn">≡</button>
+      <h2>Paramètres</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="saveSensorConfig()">💾</button> 
+    </header>
+
+    <main class="content">
+      <div class="card">
+        <h3>⚙️ Gestion des Capteurs</h3>
+        <p class="muted">Associez ici chaque capteur détecté à un point d'eau spécifique (Douche, Cuisine, etc.). Les capteurs non configurés n'apparaîtront pas dans les graphiques détaillés.</p>
+        
+        <div id="sensor-config-list">
+            <!-- Le contenu sera généré par JavaScript -->
+            <p>Chargement des capteurs...</p>
+        </div>
+
+        <h4 style="margin-top: 24px; margin-bottom: 12px;">Ajouter un nouveau capteur</h4>
+        <div id="add-sensor-form-container">
+            <!-- Le formulaire d'ajout sera inséré ici par JavaScript -->
+        </div>
       </div>
     </main>
   </section>
@@ -239,16 +288,148 @@
     <nav class="side-list">
       <a href="#" class="side-link active" data-target="view-home" onclick="goto(viewHome)">Accueil</a>
       <a href="#" class="side-link" data-target="view-costs" onclick="goto(viewCosts)">Coûts</a>
-      <a href="#" class="side-link" data-target="view-alerts" onclick="goto(viewAlerts)">Alertes et conseils</a>
-      <a href="#" class="side-link">Paramètres</a>
+      <a href="#" class="side-link" data-target="view-alerts" onclick="goto(viewAlerts)">Analyse et Objectifs</a>
+      <a href="#" class="side-link" data-target="view-settings" onclick="goto(viewSettings)">Paramètres</a>
       <a href="#" class="side-link" data-target="view-profile" onclick="goto(viewProfile)">Mon Profil</a> 
     </nav>
   </aside>
 
   <div id="overlay" class="overlay"></div>
 
+
+  <!-- NOUVEAU: Toast pour guider l'utilisateur -->
+  <div id="toast-qualify" class="toast">
+      💡 Cliquez sur une barre du graphique pour qualifier la consommation.
+  </div>
+
+  <!-- ========================================== -->
+  <!-- == MODALE POUR QUALIFIER L'ACTIVITÉ == -->
+  <!-- ========================================== -->
+  <div id="activity-modal" class="usage-modal">
+    <h3 class="modal-item-appear" style="--delay: 0.05s;">Qualifier la consommation</h3>
+    <p class="modal-item-appear" style="--delay: 0.1s; text-align: center; margin-top: -10px; margin-bottom: 20px; font-size: 15px;">
+      Le <strong id="modal-date">...</strong> à <strong id="modal-time">...</strong> : <strong id="modal-liters">...</strong> litres.
+    </p>
+
+    <form id="activity-form" onsubmit="event.preventDefault(); saveActivity();">
+      <div class="form-group modal-item-appear" style="--delay: 0.15s;">
+        <label for="activity-select">Quelle était cette activité ?</label>
+        <select id="activity-select" name="activity" required>
+          <option value="">-- Choisir une activité --</option>
+          <option value="douche">Douche</option>
+          <option value="vaisselle">Vaisselle (main)</option>
+          <option value="cuisine">Cuisine (préparation)</option>
+          <option value="arrosage">Arrosage</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+
+      <!-- NOUVEAU: Section spécifique pour la vaisselle, cachée par défaut -->
+      <div id="dishwashing-info-container" class="collapsible-section activity-specific-info">
+        <div class="info-box">
+          <p><strong>Quelques repères pour la vaisselle :</strong></p>
+          <ul>
+            <li><strong>Moyenne constatée :</strong> ~42 Litres (vaisselle familiale).</li>
+            <li><strong>Méthode "Gaspillage" :</strong> Jusqu'à 100 Litres (robinet ouvert).</li>
+            <li><strong>Méthode "Éco" :</strong> 10 - 20 Litres (avec 2 bacs).</li>
+          </ul>
+        </div>
+
+        <!-- NOUVEAU: Groupe pour l'objectif et le bouton -->
+        <div id="goal-input-group" class="form-group" style="margin-top: 20px;">
+          <label for="goal-input-liters">Fixer mon prochain objectif (en Litres)</label>
+          <div class="input-with-button">
+            <input type="number" id="goal-input-liters" placeholder="Ex: 25">
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+
+        <!-- NOUVEAU: Section pour les conseils, cachée par défaut -->
+        <div id="dishwashing-tips-container" class="collapsible-section goal-tips">
+            <div class="info-box" style="background-color: #e0f2fe; border-color: #0ea5e9;">
+                <p style="font-weight: 700; color: #0369a1;">💡 Conseils pour atteindre votre objectif :</p>
+                <ul>
+                    <li>Ne faites pas la vaisselle sous l'eau courante. Remplissez un bac pour laver et un autre pour rincer.
+                        <small style="display: block; color: #075985;">(Source: C.I.Eau)</small>
+                    </li>
+                    <li style="margin-top: 8px;">Équipez votre robinet d'un mousseur (aérateur). Il réduit le débit de 30 à 50% sans perte de confort.
+                        <small style="display: block; color: #075985;">(Source: ADEME)</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+      </div>
+
+      <!-- NOUVEAU: Section spécifique pour la DOUCHE, cachée par défaut -->
+      <div id="shower-info-container" class="collapsible-section activity-specific-info">
+        <div class="info-box">
+          <p><strong>Quelques repères pour la douche :</strong></p>
+          <ul>
+            <li><strong>Débit standard :</strong> 15 à 20 Litres / minute.</li>
+            <li><strong>Douche de 5 min :</strong> ~85 Litres.</li>
+            <li><strong>Avec pommeau éco :</strong> ~40 Litres (50% d'économie).</li>
+          </ul>
+        </div>
+
+        <div id="shower-goal-input-group" class="form-group" style="margin-top: 20px;">
+          <label for="shower-goal-input">Fixer un objectif de durée (en minutes)</label>
+          <div class="input-with-button">
+            <input type="number" id="shower-goal-input" placeholder="Ex: 5">
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+
+        <div id="shower-tips-container" class="collapsible-section goal-tips">
+            <div class="info-box" style="background-color: #e0f2fe; border-color: #0ea5e9;">
+                <p style="font-weight: 700; color: #0369a1;">💡 Conseils pour des douches plus économes :</p>
+                <ul>
+                    <li>Installez un <strong>pommeau de douche économique</strong>. Il réduit le débit de moitié sans perte de confort. <small style="display: block; color: #075985;">(Source: ADEME)</small></li>
+                    <li style="margin-top: 8px;">Utilisez un minuteur ou un sablier de douche pour maîtriser la durée. Viser <strong>moins de 5 minutes</strong> est un excellent objectif.</li>
+                </ul>
+            </div>
+        </div>
+      </div>
+
+      <!-- NOUVEAU: Section spécifique pour l'ARROSAGE, cachée par défaut -->
+      <div id="watering-info-container" class="collapsible-section activity-specific-info">
+        <div class="info-box">
+          <p><strong>Quelques repères pour l'arrosage :</strong></p>
+          <ul>
+            <li><strong>Tuyau d'arrosage :</strong> ~18 Litres / minute.</li>
+            <li><strong>30 min d'arrosage :</strong> Plus de 500 Litres !</li>
+            <li><strong>Arrosoir de 10L :</strong> Permet un usage ciblé et maîtrisé.</li>
+          </ul>
+        </div>
+
+        <div id="watering-goal-input-group" class="form-group" style="margin-top: 20px;">
+          <label for="watering-goal-input">Mon prochain objectif d'arrosage (en Litres)</label>
+          <div class="input-with-button">
+            <input type="number" id="watering-goal-input" placeholder="Ex: 100">
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+
+        <div id="watering-tips-container" class="collapsible-section goal-tips">
+            <div class="info-box" style="background-color: #e0f2fe; border-color: #0ea5e9;">
+                <p style="font-weight: 700; color: #0369a1;">💡 Conseils pour un arrosage efficace :</p>
+                <ul>
+                    <li>Arrosez <strong>le soir ou tôt le matin</strong> pour limiter l'évaporation. <small style="display: block; color: #075985;">(Source: C.I.Eau)</small></li>
+                    <li style="margin-top: 8px;">Installez un <strong>système de goutte-à-goutte</strong> et utilisez du <strong>paillage</strong> pour garder l'humidité au pied des plantes.</li>
+                </ul>
+            </div>
+        </div>
+      </div>
+      <!-- FIN de la nouvelle section -->
+
+      <div class="modal-actions modal-item-appear" style="--delay: 0.2s;">
+        <!-- Le bouton "Enregistrer" principal est déplacé. Celui-ci devient un bouton "Fermer" -->
+        <button type="button" id="close-activity-modal" class="btn btn-secondary">Fermer</button>
+      </div>
+    </form>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=8"></script>
 </body>
 </html>

@@ -8,6 +8,7 @@ const viewQuote = document.getElementById('view-quote');
 const viewHome = document.getElementById('view-home');
 const viewCosts = document.getElementById('view-costs'); 
 const viewProfile = document.getElementById('view-profile');
+const viewSettings = document.getElementById('view-settings'); // NOUVEAU
 const viewAlerts = document.getElementById('view-alerts');
 
 // Fonction de navigation avec RE-ANIMATION FORCÉE
@@ -90,9 +91,6 @@ function closeMenu() { sideMenu.classList.remove('open'); overlay.classList.remo
 document.querySelectorAll('#btn-menu, #btn-menu-costs, #openMenu, .open-menu-btn').forEach(btn => {
     btn.addEventListener('click', openMenu);
 });
-btnClose?.addEventListener('click', closeMenu);
-overlay?.addEventListener('click', closeMenu);
-
 // --- FONCTION UTILITAIRE D'AFFICHAGE (Notification) ---
 function showNotification(message, isError = false) {
     const toast = document.getElementById('toast-message') || document.createElement('div');
@@ -112,6 +110,238 @@ function showNotification(message, isError = false) {
     }, 3000);
 }
 
+
+
+// ==========================================
+// MODALE D'ACTIVITÉ (AJOUT)
+// ==========================================
+
+const activityModal = document.getElementById('activity-modal');
+const closeModalBtn = document.getElementById('close-activity-modal');
+const modalDateEl = document.getElementById('modal-date');
+const modalTimeEl = document.getElementById('modal-time');
+const modalLitersEl = document.getElementById('modal-liters');
+const activityForm = document.getElementById('activity-form');
+const activitySelect = document.getElementById('activity-select');
+const dishwashingInfoContainer = document.getElementById('dishwashing-info-container');
+const goalInput = document.getElementById('goal-input-liters');
+const goalInputGroup = document.getElementById('goal-input-group'); // Vaisselle
+const dishwashingTipsContainer = document.getElementById('dishwashing-tips-container');
+
+// NOUVEAU: Récupération des éléments pour la douche et l'arrosage
+const showerInfoContainer = document.getElementById('shower-info-container');
+const showerGoalInput = document.getElementById('shower-goal-input');
+const showerTipsContainer = document.getElementById('shower-tips-container');
+const wateringInfoContainer = document.getElementById('watering-info-container');
+const wateringGoalInput = document.getElementById('watering-goal-input');
+const wateringTipsContainer = document.getElementById('watering-tips-container');
+// NOUVEAU: Stockage simple des objectifs
+let userObjectives = []; 
+
+// NOUVEAU: Variables pour stocker les données chargées depuis la BDD
+let activityData = {
+    activities: {},
+    content: {}
+};
+
+// Fonction pour ouvrir la modale
+function openActivityModal(date, time, liters, macAddress) {
+    // 1. Mettre à jour les informations de la modale
+    modalDateEl.textContent = date;
+    modalTimeEl.textContent = time;
+    modalLitersEl.textContent = liters;
+
+    // 2. Mettre à jour dynamiquement les options du <select> depuis les données chargées
+    const activities = activityData.activities[macAddress] || [];
+    activitySelect.innerHTML = '<option value="">-- Choisir une activité --</option>'; // Vider et ajouter l'option par défaut
+    activities.forEach(act => activitySelect.innerHTML += `<option value="${act.value}">${act.label}</option>`);
+
+    // 3. Afficher la modale
+    activityModal.classList.add('show');
+    overlay.classList.add('show');
+}
+
+// Fonction pour fermer la modale
+function closeActivityModal() {
+    activityModal.classList.remove('show');
+    overlay.classList.remove('show');
+    // Cacher toutes les sections spécifiques
+    document.querySelectorAll('.activity-specific-info').forEach(el => el.classList.remove('show'));
+    // Cacher toutes les sections de conseils
+    document.querySelectorAll('.goal-tips').forEach(el => el.classList.remove('show'));
+    // Ré-afficher tous les champs de saisie d'objectif
+    document.querySelectorAll('.input-with-button').forEach(el => el.parentElement.style.display = 'block');
+    activityForm.reset(); // Réinitialise le formulaire
+}
+
+// Fonction pour sauvegarder l'activité
+function saveActivity() {
+    const activity = activitySelect.value;
+    if (!activity) {
+        showNotification("Veuillez sélectionner une activité.", true);
+        return;
+    }
+
+    const savedData = { 
+        date: modalDateEl.textContent, 
+        time: modalTimeEl.textContent, 
+        liters: modalLitersEl.textContent, 
+        activity: activity 
+    };
+
+    // Logique pour sauvegarder l'objectif
+    let goalValue = 0;
+    let goalName = '';
+    let tipsContainer = null;
+    let goalInputGroupToHide = null;
+
+    if (activity === 'vaisselle_main' && goalInput.value) {
+        goalValue = parseFloat(goalInput.value);
+        goalName = 'Prochaine Vaisselle';
+        tipsContainer = dishwashingTipsContainer;
+        goalInputGroupToHide = goalInput.closest('.form-group');
+
+    } else if ((activity === 'douche_courte' || activity === 'douche_longue') && showerGoalInput.value) {
+        // Pour la douche, l'objectif est en minutes, on le convertit en litres (base: 10L/min avec pommeau éco)
+        goalValue = parseFloat(showerGoalInput.value); // On garde la valeur en minutes
+        goalName = `Douche (${goalValue} min)`;
+        tipsContainer = showerTipsContainer;
+        goalInputGroupToHide = showerGoalInput.closest('.form-group');
+
+    } else if (activity.startsWith('arrosage_') && wateringGoalInput.value) {
+        goalValue = parseFloat(wateringGoalInput.value);
+        goalName = 'Prochain Arrosage';
+        tipsContainer = wateringTipsContainer;
+        goalInputGroupToHide = wateringGoalInput.closest('.form-group');
+    }
+
+    // Si un objectif a été défini, on l'enregistre et on affiche les conseils
+    if (goalValue > 0 && tipsContainer) {
+        const objectiveData = {
+            name: goalName,
+            target: goalValue,
+            unit: (activity.includes('douche')) ? 'min' : 'L'
+        };
+
+        // On envoie l'objectif au serveur
+        fetch(`${API_BASE_URL}add_objective.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(objectiveData)
+        })
+        .then(res => {
+            // On tente de lire la réponse JSON dans tous les cas
+            return res.json().then(data => {
+                // On vérifie si la réponse était OK *après* avoir lu le JSON
+                if (!res.ok) {
+                    // Si le serveur a renvoyé une erreur, on la propage avec les détails du JSON
+                    throw new Error(data.error || `Le serveur a répondu avec une erreur: ${res.status}`);
+                }
+                return data; // Si tout va bien, on renvoie les données
+            });
+        })
+        .then(result => {
+            if (result.success) {
+                // Si l'ajout a réussi, on recharge simplement la liste depuis la BDD pour être sûr
+                loadObjectives();
+            }
+        })
+        .catch(err => console.error("Erreur lors de l'ajout de l'objectif:", err));
+        
+        // Afficher les conseils et cacher le champ de saisie
+        tipsContainer.classList.add('show');
+        if (goalInputGroupToHide) {
+            goalInputGroupToHide.style.display = 'none';
+        }
+        
+        let notificationMessage = `Objectif "${goalName}" fixé à ${goalValue} L !`;
+        if (activity.includes('douche')) {
+            notificationMessage = `Objectif "Douche" fixé à ${goalValue} minutes !`;
+        }
+        showNotification(notificationMessage);
+
+        // On ne ferme PAS la modale pour laisser l'utilisateur lire les conseils.
+        return;
+    }
+
+    // Si aucun objectif n'est défini (ou pour les autres activités), on ferme simplement la modale.
+    console.log("Activité enregistrée :", savedData);
+    // Ici, vous enverrez les données au serveur plus tard.
+    
+    // Si ce n'est pas une vaisselle avec objectif, on enregistre et on ferme.
+    const activityLabel = activitySelect.options[activitySelect.selectedIndex].text;
+    showNotification(`Activité "${activityLabel}" enregistrée !`);
+    closeActivityModal();
+}
+
+// NOUVEAU: Fonction pour afficher les objectifs dans l'onglet "Alertes"
+function renderObjectives() {
+    const listEl = document.getElementById('objectives-list');
+    const cardEl = document.getElementById('objectives-container-card');
+    if (!listEl || !cardEl) return;
+
+    // On affiche la carte si elle n'est pas déjà visible et qu'il y a des objectifs
+    if (userObjectives.length > 0) {
+        cardEl.style.display = 'block';
+    } else {
+        cardEl.style.display = 'none';
+        return;
+    }
+
+    listEl.innerHTML = userObjectives.map(obj => `
+        <li><span class="objective-name">${obj.nom_objectif}</span> <span class="objective-value">${obj.valeur_cible} ${obj.unite}</span></li>
+    `).join('');
+}
+
+// NOUVEAU: Fonction pour charger les objectifs depuis la BDD
+async function loadObjectives() {
+    try {
+        const response = await fetch(`${API_BASE_URL}get_objectives.php`);
+        const data = await response.json();
+        userObjectives = data; // On remplace le tableau local par les données du serveur
+        renderObjectives();
+    } catch (error) {
+        console.error("Impossible de charger les objectifs:", error);
+    }
+}
+
+// ==========================================
+// ÉCOUTEURS D'ÉVÉNEMENTS
+// ==========================================
+
+// Écouteur pour afficher/cacher les options de vaisselle
+activitySelect.addEventListener('change', () => {
+    const selectedActivity = activitySelect.value;
+
+    // Cacher toutes les sections pour repartir de zéro
+    document.querySelectorAll('.activity-specific-info').forEach(el => el.classList.remove('show'));
+
+    // Afficher la section correspondante
+    if (selectedActivity === 'vaisselle_main') {
+        dishwashingInfoContainer.classList.add('show');
+    } else if (selectedActivity === 'douche_courte' || selectedActivity === 'douche_longue') {
+        showerInfoContainer.classList.add('show');
+    } else if (selectedActivity.startsWith('arrosage_')) {
+        wateringInfoContainer.classList.add('show');
+    }
+    // Pour les autres cas (lave-linge, etc.), rien ne s'affiche, ce qui est le comportement souhaité.
+});
+
+// NOUVEAU: Fonction pour charger les données des activités depuis le serveur
+async function loadActivityData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}get_activity_data.php`);
+        if (!response.ok) {
+            throw new Error(`Erreur HTTP: ${response.status}`);
+        }
+        activityData = await response.json();
+        console.log("Données d'activités chargées avec succès depuis la BDD !");
+    } catch (error) {
+        console.error("Impossible de charger les données d'activités:", error);
+        // Utiliser la fonction de notification existante
+        showNotification("Erreur de chargement des données d'activités.", true);
+    }
+}
 
 // ==========================================
 // 2. GESTION DES DATES (KPI ACCUEIL)
@@ -136,6 +366,14 @@ inputEnd.addEventListener('change', () => {
     updateDashboard(); updateHomeChart(); 
 });
 
+// Écouteurs pour la modale d'activité et l'overlay
+closeModalBtn?.addEventListener('click', closeActivityModal);
+
+// L'overlay ferme maintenant à la fois le menu et la modale
+overlay?.addEventListener('click', () => {
+    closeMenu();
+    closeActivityModal();
+});
 
 // ==========================================
 // 3. VARIABLES GLOBALES
@@ -151,14 +389,16 @@ let usageCostChart;     // Camembert (Coûts)
 let homeRange = 'day'; 
 let costsRange = 'month'; 
 let selectedMac = 'ALL'; 
+let homeViewDate = new Date(); // NOUVEAU: Date curseur pour le graphique d'accueil
+let sensorConfig = {}; // NOUVEAU: Remplacera macNames et macColors
 
 // Date curseur pour la navigation historique (Onglet Coûts)
 let currentViewDate = new Date(); 
 let recoViewDate = new Date(); // NOUVEAU: Date curseur pour les recommandations
 
-const simulatedMacs = ['00:1A:2B:3C:4D:01', '00:1A:2B:3C:4D:02', '00:1A:2B:3C:4D:03', '00:1A:2B:3C:4D:04'];
-const macNames = { '00:1A:2B:3C:4D:01': 'Douche', '00:1A:2B:3C:4D:02': 'Lave-linge', '00:1A:2B:3C:4D:03': 'Cuisine', '00:1A:2B:3C:4D:04': 'Robinet Ext.' };
-const macColors = { '00:1A:2B:3C:4D:01': '#0b67ff', '00:1A:2B:3C:4D:02': '#ff8c1a', '00:1A:2B:3C:4D:03': '#10bffd', '00:1A:2B:3C:4D:04': '#4caf50' };
+const simulatedMacs = ['00:1A:2B:3C:4D:01', '00:1A:2B:3C:4D:02', '00:1A:2B:3C:4D:03', '00:1A:2B:3C:4D:04']; // Conservé pour la simulation de données si utilisée
+// const macNames = { '00:1A:2B:3C:4D:01': 'Douche', '00:1A:2B:3C:4D:02': 'Lave-linge', '00:1A:2B:3C:4D:03': 'Cuisine', '00:1A:2B:3C:4D:04': 'Robinet Ext.' };
+// const macColors = { '00:1A:2B:3C:4D:01': '#0b67ff', '00:1A:2B:3C:4D:02': '#ff8c1a', '00:1A:2B:3C:4D:03': '#10bffd', '00:1A:2B:3C:4D:04': '#4caf50' };
 
 
 // ==========================================
@@ -276,13 +516,42 @@ async function updateDashboard() {
 }
 
 async function updateHomeChart() {
-    const { start, end } = calculateDateRange(homeRange, new Date()); 
+    const { start, end } = calculateDateRange(homeRange, homeViewDate); // Utilise homeViewDate au lieu de new Date()
     try {
-        const points = await fetchData(start, end, homeRange); 
+        const points = await fetchData(start, end, homeRange);
         if (chart) {
-            chart.data.labels = points.map(p => p.x);
-            chart.data.datasets[0].data = points.map(p => p.y);
-            chart.options.scales.x.display = homeRange !== 'day'; 
+            const isDayView = (homeRange === 'day');
+            const newChartType = isDayView ? 'bar' : 'line';
+
+            // Si le type de graphique change, il est plus sûr de le détruire et de le recréer.
+            if (!chart || chart.config.type !== newChartType) {
+                chart.destroy();
+                chart = undefined; // Vider la variable
+                const ctx = document.getElementById('historyChart').getContext('2d');
+                chart = new Chart(ctx, {
+                    type: newChartType,
+                    data: { labels: [], datasets: [{ data: [] }] },
+                    options: getHomeChartOptions() // Utiliser une fonction pour les options
+                });
+            }
+
+            if (isDayView) {
+                // Pour la vue jour, on s'assure que toutes les heures de 0 à 23h sont présentes
+                const hourlyData = new Array(24).fill(0);
+                points.forEach(p => {
+                    const hour = parseInt(p.x.split(':')[0]); // Extrait l'heure de "HH:mm"
+                    if (!isNaN(hour)) hourlyData[hour] += p.y;
+                });
+                chart.data.labels = hourlyData.map((_, i) => `${i}h`);
+                chart.data.datasets[0].data = hourlyData;
+            } else {
+                chart.data.labels = points.map(p => p.x);
+                chart.data.datasets[0].data = points.map(p => p.y);
+            }
+            
+            // Appliquer les styles spécifiques au type de graphique
+            applyChartStyles(chart, isDayView);
+
             chart.update();
         }
     } catch (err) { console.error("Erreur Home Chart"); }
@@ -366,8 +635,8 @@ async function drawPie(canvasId, start, end, isVolume) {
         const data = await res.json();
         if (!data || data.length === 0) return; 
 
-        const labels = data.map(d => macNames[d.mac] || d.mac);
-        const backgroundColors = data.map(d => macColors[d.mac] || '#cccccc');
+        const labels = data.map(d => (sensorConfig[d.mac] && sensorConfig[d.mac].name) || d.mac);
+        const backgroundColors = data.map(d => (sensorConfig[d.mac] && sensorConfig[d.mac].color) || '#cccccc');
         const values = data.map(d => isVolume ? parseFloat(d.volume_litres) : parseFloat(d.cout_euros));
         const total = values.reduce((a, b) => a + b, 0);
         const unit = isVolume ? 'L' : '€';
@@ -426,12 +695,31 @@ async function drawPie(canvasId, start, end, isVolume) {
 // ==========================================
 
 function setupRangeListeners() {
+    const homeDateSelector = document.getElementById('homeDateSelector');
+    const homeDatePicker = document.getElementById('homeDatePicker');
+    const prevDayHomeBtn = document.getElementById('prevDayHome');
+    const nextDayHomeBtn = document.getElementById('nextDayHome');
+
     // 1. Accueil
     document.getElementById('homeRangeSelector').addEventListener('click', (e) => {
         if (e.target.tagName === 'BUTTON') {
             document.querySelectorAll('#homeRangeSelector button').forEach(btn => btn.classList.remove('active'));
             e.target.classList.add('active');
             homeRange = e.target.getAttribute('data-range');
+
+            // Affiche ou cache le sélecteur de date
+            if (homeRange === 'day') {
+                homeDateSelector.style.display = 'flex';
+            } else {
+                homeDateSelector.style.display = 'none';
+            }
+
+            // Réinitialise la date à "aujourd'hui" si on quitte la vue 'jour' et y revient
+            if (homeRange !== 'day') {
+                homeViewDate = new Date();
+                homeDatePicker.value = toLocalISOString(homeViewDate);
+            }
+
             updateHomeChart();
             drawVolumePie(); 
         }
@@ -462,15 +750,45 @@ function setupRangeListeners() {
             drawCostPie();
         });
     }
+
+    // 3b. Date Picker Accueil
+    if (homeDatePicker) {
+        homeDatePicker.value = toLocalISOString(homeViewDate);
+        homeDatePicker.addEventListener('change', (e) => {
+            homeViewDate = new Date(e.target.value);
+            updateHomeChart();
+        });
+        prevDayHomeBtn.addEventListener('click', () => {
+            homeViewDate.setDate(homeViewDate.getDate() - 1);
+            homeDatePicker.value = toLocalISOString(homeViewDate);
+            updateHomeChart();
+        });
+        nextDayHomeBtn.addEventListener('click', () => {
+            homeViewDate.setDate(homeViewDate.getDate() + 1);
+            homeDatePicker.value = toLocalISOString(homeViewDate);
+            updateHomeChart();
+        });
+        homeDateSelector.style.display = 'flex'; // Afficher par défaut car la vue initiale est 'jour'
+    }
     
     // 4. Capteurs
     document.querySelectorAll('.sensor-select-all').forEach(selectElement => {
         selectElement.addEventListener('change', (e) => {
             const newMac = e.target.value;
-            selectedMac = newMac;
-            document.querySelectorAll('.sensor-select-all').forEach(o => { if (o !== e.target) o.value = newMac; });
-            updateHomeChart(); drawDailyCostChart(); drawVolumePie(); drawCostPie();
+            setSelectedMac(newMac);
         });
+    });
+}
+
+function setSelectedMac(newMac) {
+    selectedMac = newMac;
+    document.querySelectorAll('.sensor-select-all').forEach(o => o.value = newMac);
+    updateHomeChart(); drawDailyCostChart(); drawVolumePie(); drawCostPie();
+}
+
+function populateSensorSelectors() {
+    document.querySelectorAll('.sensor-select-all').forEach(select => {
+        select.innerHTML = `<option value="ALL">Tous les capteurs</option>` + Object.keys(sensorConfig).map(mac => `<option value="${mac}">${sensorConfig[mac].name}</option>`).join('');
     });
 }
 
@@ -752,7 +1070,7 @@ async function generateRecommendations() {
         const realBreakdown = await breakdownRes.json();
 
         let totalConsoReelleSemaine = 0;
-        const consoReelleParPoste = {};
+        const consoReelleParPoste = {}; // ex: { 'Douche': 150, 'Cuisine': 80 }
         realBreakdown.forEach(item => {
             const volume = parseFloat(item.volume_litres);
             const nomPoste = macNames[item.mac] || 'Inconnu';
@@ -763,7 +1081,7 @@ async function generateRecommendations() {
         // 4. Construire et afficher le HTML
         let html = (container.innerHTML.includes('warning-color') ? container.innerHTML : ''); // Conserve le message d'avertissement s'il existe
         html += `
-            <div class="reco-card">
+            <div class="card">
                 <h3>📊 Bilan de la semaine</h3>
                 <div class="reco-summary">
                     <div>
@@ -775,9 +1093,8 @@ async function generateRecommendations() {
                         <span>Votre Consommation</span>
                     </div>
                 </div>
-            </div>
-            <div class="reco-card">
-                <h3>💧 Analyse par poste</h3>
+                <hr style="border: none; border-top: 1px solid #f1f5f9; margin: 20px 0;">
+                <h3 style="margin-top: 0;">💧 Analyse par poste</h3>
         `;
 
         for (const poste in REPARTITION_CONSO_IDEALE) {
@@ -819,6 +1136,191 @@ async function generateRecommendations() {
     }
 }
 
+function getHomeChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 800, easing: 'easeOutQuart' },
+        interaction: { mode: 'index', intersect: false }, // Important pour le tooltip
+
+        // AJOUT DE LA GESTION DU CLIC
+        onClick: (event, elements) => {
+            // On ne veut activer la modale que pour la vue "Jour" (qui est un graphique en barres)
+            if (homeRange !== 'day' || elements.length === 0) {
+                return;
+            }
+            
+            const element = elements[0]; // On prend le premier élément cliqué
+            const index = element.index;
+            const dataset = chart.data.datasets[element.datasetIndex];
+            
+            const date = homeViewDate.toLocaleDateString('fr-FR');
+            const time = chart.data.labels[index]; // ex: "14h"
+            const liters = dataset.data[index];
+
+            // Ouvre la modale seulement si la consommation n'est pas nulle
+            if (liters > 0) {
+                // On passe maintenant l'adresse MAC du capteur sélectionné
+                // La variable globale `selectedMac` contient déjà cette information
+                // Si `selectedMac` est 'ALL', on ne peut pas qualifier, donc on ne fait rien.
+                if (selectedMac !== 'ALL')
+                    openActivityModal(date, time, liters.toFixed(2), selectedMac);
+            }
+        },
+
+        plugins: { legend: { display: false }, tooltip: { enabled: true, } },
+        scales: { 
+            x: { display: true, grid: { display: false } }, // Affiché par défaut, géré dynamiquement
+            y: { min: 0, grid: { color: 'rgba(15,23,42,.08)' } } 
+        }
+    };
+}
+
+function applyChartStyles(chart, isDayView) {
+    const dataset = chart.data.datasets[0];
+    dataset.backgroundColor = isDayView ? 'rgba(11, 103, 255, 0.7)' : 'rgba(11,103,255,.12)';
+    dataset.borderColor = '#0b67ff';
+    dataset.fill = !isDayView;
+    dataset.tension = isDayView ? 0 : 0.35;
+    chart.options.scales.x.display = true; // Toujours afficher l'axe X
+}
+
+// ==========================================
+// 8. GESTION DES CAPTEURS (NOUVEAU)
+// ==========================================
+
+async function loadSensorConfig() {
+    try {
+        const res = await fetch(`${API_BASE_URL}get_sensor_config.php`);
+        if (!res.ok) throw new Error(`Erreur HTTP: ${res.status}`);
+        const data = await res.json();
+        
+        sensorConfig = {}; // Réinitialiser
+        data.forEach(sensor => {
+            sensorConfig[sensor.adresse_mac] = {
+                name: sensor.nom,
+                color: sensor.couleur
+            };
+        });
+        
+        console.log("Configuration des capteurs chargée :", sensorConfig);
+        populateSensorSelectors(); // Mettre à jour les listes déroulantes partout
+        await displaySensorConfigUI(); // Mettre à jour l'UI dans la page profil
+
+    } catch (err) {
+        console.error("Impossible de charger la configuration des capteurs:", err);
+        showNotification("Erreur de chargement de la configuration des capteurs.", true);
+    }
+}
+
+async function displaySensorConfigUI() {
+    const container = document.getElementById('sensor-config-list');
+    const addSensorFormContainer = document.getElementById('add-sensor-form-container');
+    if (!container || !addSensorFormContainer) return;
+
+    try {
+        // On récupère toutes les adresses MAC, celles déjà configurées ET celles qui ont envoyé des données
+        const res = await fetch(`${API_BASE_URL}get_all_known_sensors.php`);
+        if (!res.ok) throw new Error(`Erreur HTTP: ${res.status}`);
+        const allKnownMacs = await res.json();
+
+        if (allKnownMacs.length === 0) {
+            container.innerHTML = '<p>Aucun capteur configuré ou détecté. Ajoutez votre premier capteur ci-dessous.</p>';
+        } else {
+            container.innerHTML = allKnownMacs.map(mac => {
+            const config = sensorConfig[mac] || {};
+            const name = config.name || '';
+            return `
+                <div class="sensor-config-item">
+                    <label for="sensor-name-${mac}">${mac}</label>
+                    <input type="text" id="sensor-name-${mac}" data-mac="${mac}" value="${name}" placeholder="Ex: Douche, Cuisine..." class="sensor-name-input">
+                </div>
+            `;
+            }).join('');
+        }
+
+        // Afficher le formulaire d'ajout manuel
+        addSensorFormContainer.innerHTML = `
+            <form id="add-sensor-form" class="add-sensor-form">
+                <input type="text" id="new-sensor-mac" placeholder="AA:BB:CC:DD:EE:FF" required>
+                <input type="text" id="new-sensor-name" placeholder="Nom du point d'eau" required>
+                <button type="submit">Ajouter</button>
+            </form>
+        `;
+
+        document.getElementById('add-sensor-form').addEventListener('submit', addManualSensor);
+
+    } catch (err) {
+        console.error("Erreur lors de l'affichage de l'UI de configuration des capteurs:", err);
+        container.innerHTML = '<p style="color: red;">Impossible de récupérer la liste des capteurs détectés.</p>';
+    }
+}
+
+async function addManualSensor(event) {
+    event.preventDefault();
+    const macInput = document.getElementById('new-sensor-mac');
+    const nameInput = document.getElementById('new-sensor-name');
+    const mac = macInput.value.trim();
+    const name = nameInput.value.trim();
+
+    // Validation simple de l'adresse MAC
+    const macRegex = /^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/;
+    if (!macRegex.test(mac)) {
+        showNotification("Format d'adresse MAC invalide.", true);
+        return;
+    }
+
+    const newSensor = { mac: mac.toUpperCase(), name: name };
+    const configToSave = [newSensor];
+
+    try {
+        const res = await fetch(`${API_BASE_URL}update_sensor_config.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configToSave)
+        });
+        const result = await res.json();
+        if (result.success) {
+            showNotification(`Capteur "${name}" ajouté !`);
+            macInput.value = '';
+            nameInput.value = '';
+            await loadSensorConfig(); // Recharge toute la config et l'UI
+        } else {
+            showNotification("Erreur: " + (result.error || "Impossible d'ajouter le capteur."), true);
+        }
+    } catch (err) {
+        console.error("Erreur lors de l'ajout manuel du capteur:", err);
+        showNotification("Erreur de connexion pour l'ajout du capteur.", true);
+    }
+}
+
+async function saveSensorConfig() {
+    const inputs = document.querySelectorAll('#sensor-config-list input.sensor-name-input');
+    const configToSave = Array.from(inputs).map(input => ({
+        mac: input.dataset.mac,
+        name: input.value
+    }));
+
+    try {
+        const res = await fetch(`${API_BASE_URL}update_sensor_config.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(configToSave)
+        });
+        const result = await res.json();
+        if (result.success) {
+            showNotification("Configuration des capteurs enregistrée !");
+            await loadSensorConfig(); // Recharger pour mettre à jour toute l'app (y compris les listes déroulantes)
+            setSelectedMac('ALL'); // Revenir à la vue "Tous les capteurs"
+        } else {
+            showNotification("Erreur: " + (result.error || "Impossible d'enregistrer."), true);
+        }
+    } catch (err) {
+        console.error("Erreur lors de la sauvegarde de la config capteurs:", err);
+        showNotification("Erreur de connexion pour la sauvegarde des capteurs.", true);
+    }
+}
+
 // ----- Initialisation -----
 (async () => {
     const ctx = document.getElementById('historyChart').getContext('2d');
@@ -835,23 +1337,22 @@ async function generateRecommendations() {
     chipEnd.textContent = `Au ${new Date(inputEnd.value).toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'2-digit' })} ▾`;
     
     // Création graphique vide
+    // On détermine le type initial : 'bar' si la vue par défaut est 'day', sinon 'line'.
+    const initialChartType = (homeRange === 'day') ? 'bar' : 'line';
     chart = new Chart(ctx, {
-        type: 'line',
-        data: { labels: [], datasets: [{ data: [], borderColor: '#0b67ff', backgroundColor: 'rgba(11,103,255,.12)', fill: true, tension: 0.35, pointRadius: 3, pointBackgroundColor: '#ff8c1a', pointHoverRadius: 4 }] },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            animation: { duration: 800, easing: 'easeOutQuart' },
-            interaction: { mode: 'index', intersect: false },
-            plugins: { legend: { display: false }, tooltip: { enabled: true } },
-            scales: { x: { display: false }, y: { min: 0, grid: { color: 'rgba(15,23,42,.08)' } } }
-        }
+        type: initialChartType,
+        data: { labels: [], datasets: [{ data: [] }] },
+        options: getHomeChartOptions()
     });
 
+    await loadSensorConfig(); // NOUVEAU: Charger la config des capteurs en premier
     setupRangeListeners();
     setupProfileInteractions(); // Initialiser les interactions du profil
     await loadProfile(); // Charger les données du profil au démarrage
+    await loadActivityData(); // NOUVEAU: Charger les données des activités
     await refreshUserList(); // Charger la liste des membres
+    await loadObjectives(); // NOUVEAU: Charger les objectifs depuis la BDD
+    // renderObjectives(); // Cet appel est maintenant dans loadObjectives()
 
     updatePeriodDisplay();
 

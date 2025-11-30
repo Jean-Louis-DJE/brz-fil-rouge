@@ -594,3 +594,170 @@ canvas { display: block; width: 100%; }
 .reco-item-values { font-size: 14px; text-align: right; }
 .reco-item-values .real-value { font-weight: 600; }
 .reco-item-values .ideal-value { color: var(--muted); }
+
+/* NOUVEAU: Grille pour la page Analyse et Objectifs (version corrigée) */
+@media (min-width: 1024px) {
+  #analysis-content {
+    padding: 16px 24px;
+    display: block; /* Annule la grille par défaut de .content */
+  }
+
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2/3 pour la colonne principale, 1/3 pour les objectifs */
+    gap: 24px;
+    align-items: start;
+  }
+
+  .analysis-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .analysis-side-column #objectives-container-card {
+    position: sticky; /* L'encart des objectifs reste visible au scroll */
+    top: 84px; /* 64px (topbar) + 20px (marge) */
+  }
+}
+
+/* ======================================= */
+/* == MODAL DE QUALIFICATION D'USAGE    == */
+/* ======================================= */
+
+.usage-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 90%;
+  max-width: 380px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  z-index: 100;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: none; /* Caché par défaut */
+}
+
+.usage-modal.show {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.usage-modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.usage-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.usage-modal select,
+.usage-modal input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 16px;
+  background-color: #f8fafc;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.modal-actions .btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Style pour le bloc d'info dans la modale */
+.info-box {
+  background-color: #eef2ff;
+  border-left: 4px solid var(--primary);
+  padding: 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  color: #334155;
+}
+.info-box p { margin: 0 0 8px 0; }
+.info-box ul { margin: 0; padding-left: 20px; }
+.info-box li { margin-bottom: 4px; }
+
+/* Style pour la liste des objectifs */
+#objectives-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px;
+  border-bottom: 1px solid #f1f5f9;
+}
+#objectives-list li:last-child { border-bottom: none; }
+#objectives-list .objective-name { font-weight: 600; }
+#objectives-list .objective-value { font-weight: 700; font-size: 16px; color: var(--primary); }
+#objectives-list .objective-status { font-size: 12px; color: var(--muted); }
+
+/* NOUVEAU: Style pour aligner l'input et le bouton OK */
+.input-with-button {
+  display: flex;
+  gap: 8px;
+}
+.input-with-button input {
+  flex-grow: 1;
+}
+.input-with-button button {
+  flex-shrink: 0;
+  padding: 10px 20px !important;
+}
+
+/* NOUVEAU: Style pour les sections animées dans la modale */
+.collapsible-section {
+  transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, transform 0.4s ease-in-out, margin-top 0.4s ease-in-out;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  /* Forcer les marges à 0 quand c'est caché */
+  margin-top: 0 !important;
+}
+
+.collapsible-section.show {
+  max-height: 500px; /* Une hauteur suffisante pour contenir le contenu */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Rétablir la marge quand la section est visible */
+.collapsible-section.show.activity-specific-info { margin-top: 20px !important; }
+
+/* NOUVEAU: Style pour l'animation en cascade des éléments de la modale */
+.modal-item-appear {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  /* Utilise une variable CSS pour le délai, définie dans le HTML */
+  transition-delay: var(--delay, 0s);
+}
+
+/* Lorsque la modale est visible, on déclenche l'animation des éléments enfants */
+.usage-modal.show .modal-item-appear {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* On s'assure que le formulaire ne prend pas de place avant l'animation */
+.usage-modal form { min-height: 230px; }
