@@ -14,12 +14,12 @@ DROP DATABASE IF EXISTS breizh4line;
 CREATE DATABASE IF NOT EXISTS breizh4line CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 USE breizh4line;
 
-CREATE TABLE consommation (
+CREATE TABLE sensor_data (
   id INT AUTO_INCREMENT PRIMARY KEY,
-  date_mesure DATETIME NOT NULL,
-  valeur FLOAT NOT NULL,
-  adresse_mac_capteur VARCHAR(17) NOT NULL  
-);
+  sender_id VARCHAR(17) NOT NULL,
+  value FLOAT NOT NULL,
+  date_mesure DATETIME NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE utilisateur (
   id INT AUTO_INCREMENT PRIMARY KEY,
@@ -65,4 +65,11 @@ CREATE TABLE objectifs (
   `date_creation` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   `date_achevement` DATETIME NULL,
   FOREIGN KEY (`id_utilisateur`) REFERENCES `utilisateur`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Table pour stocker la configuration des capteurs (nom et couleur)
+CREATE TABLE capteurs (
+    adresse_mac VARCHAR(17) PRIMARY KEY,
+    nom VARCHAR(50) NOT NULL,
+    couleur VARCHAR(7)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
