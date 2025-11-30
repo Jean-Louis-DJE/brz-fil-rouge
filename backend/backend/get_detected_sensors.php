@@ -4,7 +4,7 @@ require 'config.php'; // Votre fichier de connexion à la BDD
 header('Content-Type: application/json');
 
 try {
-    $stmt = $pdo->query("SELECT DISTINCT adresse_mac_capteur FROM consommation ORDER BY adresse_mac_capteur");
+    $stmt = $pdo->query("SELECT DISTINCT sender_id FROM sensor_data ORDER BY sender_id");
     $macs = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
     echo json_encode($macs);
 } catch (PDOException $e) {

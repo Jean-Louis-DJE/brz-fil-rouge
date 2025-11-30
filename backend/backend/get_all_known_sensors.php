@@ -10,9 +10,9 @@ try {
     // 3. `SELECT DISTINCT adresse_mac_capteur FROM consommation`: Récupère toutes les adresses MAC uniques qui ont déjà envoyé au moins une mesure.
     
     $stmt = $pdo->query("
-        SELECT adresse_mac FROM capteurs
+        SELECT adresse_mac COLLATE utf8mb4_general_ci AS mac FROM capteurs
         UNION
-        SELECT DISTINCT sender_id AS adresse_mac FROM sensor_data
+        SELECT DISTINCT sender_id COLLATE utf8mb4_general_ci AS mac FROM sensor_data
     ");
 
     // On utilise fetchAll avec PDO::FETCH_COLUMN pour obtenir un tableau simple ['mac1', 'mac2', ...]
