@@ -198,19 +198,19 @@ function saveActivity() {
     let tipsContainer = null;
     let goalInputGroupToHide = null;
 
-    if (activity === 'vaisselle_main' && goalInput.value) {
+    if (activity === 'vaisselle_main' && goalInput.value) { // CORRECTION: Retour à la valeur dynamique
         goalValue = parseFloat(goalInput.value);
         goalName = 'Prochaine Vaisselle';
         tipsContainer = dishwashingTipsContainer;
         goalInputGroupToHide = goalInput.closest('.form-group');
 
-    } else if ((activity === 'douche_courte' || activity === 'douche_longue') && showerGoalInput.value) {
+    } else if ((activity === 'douche_courte' || activity === 'douche_longue') && showerGoalInput.value) { // CORRECTION: Retour aux valeurs dynamiques
         goalValue = parseFloat(showerGoalInput.value); // La valeur est maintenant en Litres
         goalName = `Prochaine Douche`;
         tipsContainer = showerTipsContainer;
         goalInputGroupToHide = showerGoalInput.closest('.form-group');
 
-    } else if (activity.startsWith('arrosage_') && wateringGoalInput.value) {
+    } else if (activity.startsWith('arrosage_') && wateringGoalInput.value) { // CORRECTION: Retour à la valeur dynamique
         goalValue = parseFloat(wateringGoalInput.value);
         goalName = 'Prochain Arrosage';
         tipsContainer = wateringTipsContainer;
@@ -288,8 +288,32 @@ function renderObjectives() {
     }
 
     listEl.innerHTML = userObjectives.map(obj => `
-        <li><span class="objective-name">${obj.nom_objectif}</span> <span class="objective-value">${obj.valeur_cible} ${obj.unite}</span></li>
+        <li>
+            <div class="objective-details">
+                <span class="objective-name">${obj.nom_objectif}</span> 
+                <span class="objective-value">${obj.valeur_cible} ${obj.unite}</span>
+            </div>
+            <button class="delete-objective-btn" onclick="deleteObjective(${obj.id})">🗑️</button>
+        </li>
     `).join('');
+}
+
+// NOUVEAU: Fonction pour supprimer un objectif
+async function deleteObjective(objectiveId) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet objectif ?")) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}delete_objective.php?id=${objectiveId}`, { method: 'GET' });
+        const result = await response.json();
+        showNotification(result.success ? "Objectif supprimé." : `Erreur: ${result.error}`, !result.success);
+        if (result.success) {
+            loadObjectives(); // Recharger la liste pour refléter la suppression
+        }
+    } catch (error) {
+        showNotification("Erreur de connexion lors de la suppression.", true);
+    }
 }
 
 // NOUVEAU: Fonction pour charger les objectifs depuis la BDD
@@ -316,11 +340,11 @@ activitySelect.addEventListener('change', () => {
     document.querySelectorAll('.activity-specific-info').forEach(el => el.classList.remove('show'));
 
     // Afficher la section correspondante
-    if (selectedActivity === 'vaisselle_main') {
+    if (selectedActivity === 'vaisselle_main') { // CORRECTION: Utiliser la valeur dynamique
         dishwashingInfoContainer.classList.add('show');
-    } else if (selectedActivity === 'douche_courte' || selectedActivity === 'douche_longue') {
+    } else if (selectedActivity === 'douche_courte' || selectedActivity === 'douche_longue') { // CORRECTION: Utiliser les valeurs dynamiques
         showerInfoContainer.classList.add('show');
-    } else if (selectedActivity.startsWith('arrosage_')) {
+    } else if (selectedActivity.startsWith('arrosage_')) { // CORRECTION: Utiliser la valeur dynamique
         wateringInfoContainer.classList.add('show');
     }
     // Pour les autres cas (lave-linge, etc.), rien ne s'affiche, ce qui est le comportement souhaité.
@@ -604,7 +628,7 @@ async function drawDailyCostChart() {
 
 // --- Camemberts (AVEC ANIMATION REINITIALISÉE) ---
 async function drawVolumePie() {
-    const { start, end } = calculateDateRange(homeRange, new Date()); 
+    const { start, end } = calculateDateRange(homeRange, homeViewDate); 
     await drawPie('volumeBreakdownChart', start, end, true);
 }
 
@@ -781,6 +805,7 @@ function setupRangeListeners() {
             }
             updateHomePeriodDisplay();
             updateHomeChart();
+            drawVolumePie(); // NOUVEAU: Mettre à jour le camembert aussi
         });
 
         prevDayHomeBtn.addEventListener('click', () => {
@@ -793,6 +818,7 @@ function setupRangeListeners() {
             }
             updateHomePeriodDisplay();
             updateHomeChart();
+            drawVolumePie(); // NOUVEAU: Mettre à jour le camembert aussi
         });
 
         nextDayHomeBtn.addEventListener('click', () => {
@@ -805,6 +831,7 @@ function setupRangeListeners() {
             }
             updateHomePeriodDisplay();
             updateHomeChart();
+            drawVolumePie(); // NOUVEAU: Mettre à jour le camembert aussi
         });
 
         homeDateSelector.style.display = 'flex'; // Afficher par défaut car la vue initiale est 'jour'
@@ -1270,11 +1297,42 @@ function getHomeChartOptions() {
 
             // Ouvre la modale seulement si la consommation n'est pas nulle
             if (liters > 0) {
-                // On passe maintenant l'adresse MAC du capteur sélectionné
-                // La variable globale `selectedMac` contient déjà cette information
-                // Si `selectedMac` est 'ALL', on ne peut pas qualifier, donc on ne fait rien.
-                if (selectedMac !== 'ALL')
-                    openActivityModal(date, time, liters.toFixed(2), selectedMac);
+                // On ne peut qualifier que si un capteur spécifique est sélectionné
+                if (selectedMac === 'ALL') {
+                    return; // On ne fait rien si "Tous les capteurs" est sélectionné
+                }
+
+                // NOUVELLE LOGIQUE CORRIGÉE
+                const sensorName = sensorConfig[selectedMac]?.name; // ex: "Douche"
+
+                // On cherche un objectif pertinent SEULEMENT si le nom du capteur est défini
+                if (sensorName) {
+                    const relevantObjective = userObjectives.find(obj => obj.nom_objectif.includes(sensorName));
+
+                    if (relevantObjective) {
+                        // SCÉNARIO 1 : Un objectif est trouvé, on demande confirmation
+                        const confirmation = confirm(
+                            `Vous avez un objectif de ${relevantObjective.valeur_cible} ${relevantObjective.unite} pour votre prochaine "${sensorName}".\n\n` +
+                            `Cette consommation de ${liters.toFixed(1)} L correspond-elle à cet objectif ?\n\n` +
+                            `- Cliquez sur "OK" si c'est le cas.\n` +
+                            `- Cliquez sur "Annuler" si c'est une autre consommation (pour la qualifier différemment).`
+                        );
+
+                        if (confirmation) {
+                            // L'utilisateur a dit OUI : on valide l'objectif et on s'arrête là.
+                            const isSuccess = liters <= relevantObjective.valeur_cible;
+                            showNotification(
+                                isSuccess ? `✅ Objectif atteint ! (${liters.toFixed(1)} L / ${relevantObjective.valeur_cible} L)` : `❌ Objectif manqué. (${liters.toFixed(1)} L / ${relevantObjective.valeur_cible} L). Mieux la prochaine fois !`,
+                                !isSuccess
+                            );
+                            return; // <-- CORRECTION CRUCIALE : On arrête le script ici.
+                        }
+                        // Si l'utilisateur clique sur "Annuler", le script continue et ouvrira la modale ci-dessous.
+                    }
+                }
+
+                // SCÉNARIO 2 : Pas d'objectif trouvé OU l'utilisateur a cliqué "Annuler". On ouvre la modale classique.
+                openActivityModal(date, time, liters.toFixed(2), selectedMac);
             }
         },
 
@@ -1342,8 +1400,15 @@ async function displaySensorConfigUI() {
             const name = config.name || '';
             return `
                 <div class="sensor-config-item">
-                    <label for="sensor-name-${mac}">${mac}</label>
-                    <input type="text" id="sensor-name-${mac}" data-mac="${mac}" value="${name}" placeholder="Ex: Douche, Cuisine..." class="sensor-name-input">
+                    <label for="sensor-name-${mac}" class="sensor-mac-label">${mac}</label>
+                    <select id="sensor-name-${mac}" data-mac="${mac}" class="sensor-name-input">
+                        <option value="">-- Non assigné --</option>
+                        ${Object.keys(REPARTITION_CONSO_IDEALE).map(poste => `
+                            <option value="${poste}" ${name === poste ? 'selected' : ''}>
+                                ${poste}
+                            </option>
+                        `).join('')}
+                    </select>
                 </div>
             `;
             }).join('');
@@ -1352,8 +1417,13 @@ async function displaySensorConfigUI() {
         // Afficher le formulaire d'ajout manuel
         addSensorFormContainer.innerHTML = `
             <form id="add-sensor-form" class="add-sensor-form">
-                <input type="text" id="new-sensor-mac" placeholder="AA:BB:CC:DD:EE:FF" required>
-                <input type="text" id="new-sensor-name" placeholder="Nom du point d'eau" required>
+                <input type="text" id="new-sensor-mac" placeholder="Adresse MAC (AA:BB:...)" required>
+                <select id="new-sensor-name" required>
+                    <option value="" disabled selected>-- Choisir un point d'eau --</option>
+                    ${Object.keys(REPARTITION_CONSO_IDEALE).map(poste => `
+                        <option value="${poste}">${poste}</option>
+                    `).join('')}
+                </select>
                 <button type="submit">Ajouter</button>
             </form>
         `;

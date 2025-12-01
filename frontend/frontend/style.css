@@ -165,12 +165,31 @@ h2 {
   padding: 16px;
   margin-bottom: 14px;
 }
+.kpi {
+  /* RETOUR À LA FORME ORIGINALE - Corrigée et droite */
+  width: 320px; /* Assez grand pour le contenu */
+  height: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  /* La forme de base avec un coin pointu (en haut à gauche) */
+  border-radius: 0 50% 50% 50%;
+  /* On tourne la forme pour que la pointe soit en haut */
+  transform: rotate(45deg);
+  background: var(--card); /* Le background doit être sur l'élément lui-même */
+  box-shadow: 0 12px 28px rgba(11, 103, 255, 0.2); /* Ombre plus prononcée */
+}
 
 /* KPI CARD */
-.kpi .date-row {
+.date-row {
   display: flex;
   gap: 10px;
-  margin-bottom: 8px;
+  justify-content: center;
+  margin-bottom: 60px; /* Espace au-dessus de la goutte (encore augmenté) */
 }
 .chip {
   border: none;
@@ -181,32 +200,30 @@ h2 {
   cursor: pointer;
 }
 .liters {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  padding: 6px 6px 0 6px;
+  display: flex; /* Toujours en flexbox */
+  flex-direction: column; /* Mais en colonne */
+  align-items: center; /* Pour tout centrer horizontalement */
+  gap: 0; /* On ajuste l'espacement */
+  /* On annule la rotation pour redresser le contenu */
+  transform: rotate(-45deg);
 }
 .liters #litersValue {
   font-size: 72px;
   font-weight: 800;
-  letter-spacing: 1px;
-}
-.liters .unit {
-  color: #19aaff;
-  font-weight: 700;
-}
-.units-column {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  align-items: flex-start;
-  padding-bottom: 4px;
+  letter-spacing: 1px; /* On garde l'espacement des lettres */
+  line-height: 1; /* On réduit la hauteur de ligne pour rapprocher le texte en dessous */
+  margin-bottom: 8px; /* On ajoute une petite marge en dessous du grand nombre */
 }
 .liters .cost {
   color: var(--primary);
   font-size: 18px;
   font-weight: 700;
   margin-top: 4px;
+}
+/* Style commun pour "Litres" et le coût */
+.liters .unit {
+  color: #19aaff;
+  font-weight: 700;
 }
 
 /* CHART CARDS */
@@ -419,11 +436,16 @@ canvas { display: block; width: 100%; }
     margin-top: 32px;
   }
   
+  .date-row {
+    grid-column: 1 / -1; /* Fait en sorte que la ligne des dates s'étende sur toute la largeur */
+    margin-bottom: 60px; /* Espace augmenté et unifié avec la vue mobile */
+  }
+
   .kpi {
     grid-column: 1 / -1;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    /* La disposition en colonne et le centrage sont déjà gérés par le style mobile */
+    /* On ajuste juste le padding et le gap pour les grands écrans */
+    gap: 20px;
     padding: 32px;
   }
   .kpi .date-row { margin-bottom: 0; }
@@ -624,6 +646,24 @@ canvas { display: block; width: 100%; }
     position: sticky; /* L'encart des objectifs reste visible au scroll */
     top: 84px; /* 64px (topbar) + 20px (marge) */
   }
+
+  /* NOUVEAU: Grille pour la page Coûts */
+  .costs-grid {
+    grid-column: 1 / -1; /* Prend toute la largeur */
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* 1/3 pour le camembert, 2/3 pour le graphe */
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* NOUVEAU: Grille pour la page Accueil */
+  .home-grid {
+    grid-column: 1 / -1; /* Prend toute la largeur */
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* 1/3 pour le camembert, 2/3 pour le graphe */
+    gap: 24px;
+    align-items: start;
+  }
 }
 
 /* ======================================= */
@@ -710,11 +750,27 @@ canvas { display: block; width: 100%; }
   align-items: center;
   padding: 12px 4px;
   border-bottom: 1px solid #f1f5f9;
+  gap: 12px; /* Ajoute un espace entre les détails et le bouton */
 }
 #objectives-list li:last-child { border-bottom: none; }
+#objectives-list .objective-details {
+  display: flex;
+  flex-direction: column; /* Empile le nom et la valeur */
+  flex-grow: 1;
+}
 #objectives-list .objective-name { font-weight: 600; }
-#objectives-list .objective-value { font-weight: 700; font-size: 16px; color: var(--primary); }
+#objectives-list .objective-value { font-weight: 700; font-size: 15px; color: var(--primary); margin-top: 2px; }
 #objectives-list .objective-status { font-size: 12px; color: var(--muted); }
+
+/* NOUVEAU: Style pour le bouton de suppression */
+.delete-objective-btn {
+  background: none;
+  border: none;
+  color: #ef4444; /* Rouge pour la suppression */
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+}
 
 /* NOUVEAU: Style pour aligner l'input et le bouton OK */
 .input-with-button {
@@ -766,3 +822,89 @@ canvas { display: block; width: 100%; }
 
 /* On s'assure que le formulaire ne prend pas de place avant l'animation */
 .usage-modal form { min-height: 230px; }
+
+/* ======================================= */
+/* == PAGE PARAMÈTRES (Sensor Config)   == */
+/* ======================================= */
+
+#sensor-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espace entre chaque ligne de capteur */
+}
+
+.sensor-config-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9; /* Ligne de séparation fine */
+}
+
+.sensor-config-item:last-child {
+    border-bottom: none; /* Pas de ligne pour le dernier élément */
+}
+
+.sensor-mac-label {
+    font-family: 'Courier New', Courier, monospace; /* Police "tech" pour l'adresse MAC */
+    font-size: 14px;
+    color: var(--muted);
+    flex-shrink: 0; /* Empêche le label de se réduire */
+    width: 160px; /* Largeur fixe pour un alignement parfait */
+}
+
+.sensor-name-input {
+    /* On réutilise le style des autres select pour la cohérence */
+    flex-grow: 1;
+    width: auto;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sensor-name-input:focus {
+    border-color: var(--primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(11, 103, 255, 0.1);
+}
+
+/* Style pour le formulaire d'ajout manuel */
+.add-sensor-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.add-sensor-form input,
+.add-sensor-form select {
+    /* On applique le même style que les selects ci-dessus */
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    font-size: 15px;
+}
+
+.add-sensor-form button {
+    /* Style de bouton primaire */
+    padding: 9px 16px;
+    border: none;
+    background-color: var(--primary);
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-sensor-form button:hover {
+    background-color: #0a58d1; /* Un peu plus foncé au survol */
+}

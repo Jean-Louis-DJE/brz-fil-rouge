@@ -6,7 +6,7 @@
   <title>BREIZH4LINE</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=7" />
 </head>
 <body>
 
@@ -36,58 +36,59 @@
     </header>
 
     <main class="content">
-      <h2>Historique</h2>
+      <div class="date-row">
+        <button class="chip" id="chip-start">Chargement...</button>
+        <button class="chip" id="chip-end">...</button>
+        <input type="date" id="dateStart" style="display:none;">
+        <input type="date" id="dateEnd" style="display:none;">
+      </div>
 
       <div class="card kpi">
-        <div class="date-row">
-          <button class="chip" id="chip-start">Chargement...</button>
-          <button class="chip" id="chip-end">...</button>
-          <input type="date" id="dateStart" style="display:none;">
-          <input type="date" id="dateEnd" style="display:none;">
-        </div>
         <div class="liters">
           <span id="litersValue">...</span>
-          <div class="units-column">
-            <span class="unit">Litres</span>
-            <span id="costValue" class="unit cost">... €</span> 
+          <span class="unit">Litres</span>
+          <span id="costValue" class="unit cost">... €</span> 
+        </div>
+      </div>
+      <h2>Historique</h2>
+
+      <!-- NOUVEAU: Widget de sélection de période dédié pour l'accueil -->
+      <div class="card" id="home-period-card">
+        <div class="card-title" style="margin-bottom: 10px;">
+          Période d'analyse
+          <div class="range-selector" id="homeRangeSelector">
+            <button class="chip active" data-range="day">Jour</button>
+            <button class="chip" data-range="month">Mois</button>
+            <button class="chip" data-range="year">Année</button>
+          </div>
+        </div>
+        <div class="in-card-filter" id="homeDateSelector" style="justify-content: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="nav-arrow" id="prevDayHome">&lt;</button>
+            <input type="date" id="homeDatePicker" class="date-picker-input">
+            <button class="nav-arrow" id="nextDayHome">&gt;</button>
           </div>
         </div>
       </div>
 
-      <div class="card chart-card" style="height: 420px;">
-        <div class="card-title">
-            Courbe
-            <div class="range-selector" id="homeRangeSelector">
-                <button class="chip active" data-range="day">Jour</button>
-                <button class="chip" data-range="month">Mois</button>
-                <button class="chip" data-range="year">Année</button>
-            </div>
+      <!-- NOUVEAU: Grille pour les deux graphiques de l'accueil -->
+      <div class="home-grid">
+        <!-- Colonne de gauche : Camembert -->
+        <div class="card chart-card" style="height: 420px;">
+          <div class="card-title">Répartition Volume (%)</div>
+          <canvas id="volumeBreakdownChart"></canvas>
         </div>
-
-        <div class="in-card-filter">
+        <!-- Colonne de droite : Graphique principal -->
+        <div class="card chart-card" style="height: 420px;">
+          <div class="card-title">Historique</div>
+          <div class="in-card-filter">
             <label for="sensor-select-home" class="sensor-label">Point d'eau :</label>
             <select id="sensor-select-home" class="sensor-select-all">
                 <option value="ALL">Total (Tous les points d'eau)</option>
-                <option value="00:1A:2B:3C:4D:01">Douche</option>
-                <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
-                <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
-                <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
             </select>
+          </div>
+          <canvas id="historyChart"></canvas>
         </div>
-
-        <!-- NOUVEAU: Sélecteur de date pour la vue "Jour" -->
-        <div class="in-card-filter" id="homeDateSelector" style="display: flex; padding-top: 8px;">
-            <span class="sensor-label">Date :</span>
-            <button class="nav-arrow" id="prevDayHome">&lt;</button>
-            <input type="date" id="homeDatePicker" class="date-picker-input">
-            <button class="nav-arrow" id="nextDayHome">&gt;</button>
-        </div>
-        <canvas id="historyChart"></canvas>
-      </div>
-      
-      <div class="card chart-card">
-        <div class="card-title">Répartition Volume Total (%)</div>
-        <canvas id="volumeBreakdownChart"></canvas>
       </div>
       
     </main>
@@ -104,43 +105,44 @@
 
     <main class="content">
       <h2>Analyse des Coûts</h2>
-
-      <div class="card chart-card" style="height: 440px;">
-        <div class="card-title">
-          Coût (<span id="currentPeriodLabel">Mois</span>)
+      
+      <!-- NOUVEAU: Widget de sélection de période dédié -->
+      <div class="card" id="costs-period-card">
+        <div class="card-title" style="margin-bottom: 10px;">
+          Période d'analyse
           <div class="range-selector" id="costsRangeSelector">
-              <button class="chip" data-range="week">Semaine</button>
-              <button class="chip active" data-range="month">Mois</button>
-              <button class="chip" data-range="year">Année</button>
+            <button class="chip" data-range="week">Semaine</button>
+            <button class="chip active" data-range="month">Mois</button>
+            <button class="chip" data-range="year">Année</button>
           </div>
         </div>
-        
-        <!-- NOUVEAU: Sélecteur de période unifié -->
         <div class="in-card-filter" style="justify-content: center;">
-            <div id="costsDateSelector" style="display: flex; align-items: center; gap: 8px;">
-                <button id="prevPeriodCostsBtn" class="nav-arrow">&lt;</button>
-                <input type="text" id="costsDatePicker" class="date-picker-input" readonly>
-                <button id="nextPeriodCostsBtn" class="nav-arrow">&gt;</button>
-            </div>
+          <div id="costsDateSelector" style="display: flex; align-items: center; gap: 8px;">
+            <button id="prevPeriodCostsBtn" class="nav-arrow">&lt;</button>
+            <input type="text" id="costsDatePicker" class="date-picker-input" readonly>
+            <button id="nextPeriodCostsBtn" class="nav-arrow">&gt;</button>
+          </div>
         </div>
-
-        <div class="in-card-filter">
+      </div>
+      
+      <!-- NOUVEAU: Grille pour les deux graphiques -->
+      <div class="costs-grid">
+        <!-- Colonne de gauche : Camembert -->
+        <div class="card chart-card">
+          <div class="card-title">Répartition Coûts (€)</div>
+          <canvas id="usageChart"></canvas>
+        </div>
+        <!-- Colonne de droite : Graphique en barres -->
+        <div class="card chart-card">
+          <div class="card-title">Coût par période</div>
+          <div class="in-card-filter">
             <label for="sensor-select-costs" class="sensor-label">Point d'eau :</label>
             <select id="sensor-select-costs" class="sensor-select-all">
                 <option value="ALL">Total (Tous les points d'eau)</option>
-                <option value="00:1A:2B:3C:4D:01">Douche</option>
-                <option value="00:1A:2B:3C:4D:02">Lave-linge</option>
-                <option value="00:1A:2B:3C:4D:03">Évier Cuisine</option>
-                <option value="00:1A:2B:3C:4D:04">Robinet Extérieur</option>
             </select>
+          </div>
+          <canvas id="dailyCostChart"></canvas>
         </div>
-
-        <canvas id="dailyCostChart"></canvas>
-      </div>
-      
-      <div class="card chart-card">
-        <div class="card-title">Répartition Coûts (€)</div>
-        <canvas id="usageChart"></canvas>
       </div>
       
     </main>
@@ -434,6 +436,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="app.js?v=9"></script>
+  <script src="app.js?v=11"></script>
 </body>
 </html>
