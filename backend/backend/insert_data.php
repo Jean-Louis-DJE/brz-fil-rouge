@@ -7,7 +7,7 @@ include 'config.php';
 // Récupérer les données POST
 $data = json_decode(file_get_contents('php://input'), true);
 
-$valeur = $data['valeur'] ?? null;
+$valeur = isset($data['valeur']) ? $data['valeur'] / 10 : null;
 // NOUVEAU : Récupérer l'adresse MAC
 $mac_address = $data['adresse_mac_capteur'] ?? null; 
 

@@ -18,24 +18,32 @@ $colorIndex = 0;
 try {
     $pdo->beginTransaction();
 
-    $stmt = $pdo->prepare(
+    // On prépare deux requêtes : une pour l'insertion, une pour la mise à jour
+    $stmt_insert = $pdo->prepare(
         "INSERT INTO capteurs (adresse_mac, nom, couleur) VALUES (:mac, :nom, :couleur)
-         ON DUPLICATE KEY UPDATE nom = :nom, couleur = :couleur"
+         ON DUPLICATE KEY UPDATE nom = :nom" // On ne touche pas à la couleur si la ligne existe
     );
 
     foreach ($input as $sensor) {
         $mac = $sensor['mac'];
         $name = trim($sensor['name']);
 
-        // On n'enregistre ou ne met à jour que les capteurs qui ont un nom
+        // On ne traite que les capteurs qui ont un nom
         if (!empty($name)) {
-            $color = $colors[$colorIndex % count($colors)];
-            $stmt->execute([
+            // Vérifier si le capteur a déjà une couleur
+            $checkColorStmt = $pdo->prepare("SELECT couleur FROM capteurs WHERE adresse_mac = ?");
+            $checkColorStmt->execute([$mac]);
+            $existingColor = $checkColorStmt->fetchColumn();
+
+            // Si pas de couleur, on en assigne une nouvelle. Sinon, on garde l'ancienne.
+            $colorToUse = $existingColor ?: $colors[$colorIndex % count($colors)];
+
+            $stmt_insert->execute([
                 ':mac' => $mac,
                 ':nom' => $name,
-                ':couleur' => $color
+                ':couleur' => $colorToUse
             ]);
-            $colorIndex++;
+            if (!$existingColor) $colorIndex++; // On incrémente l'index uniquement si on a utilisé une nouvelle couleur
         }
     }
 
