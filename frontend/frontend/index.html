@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BREIZH4LINE</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#ffffff" />
+  <link rel="stylesheet" href="style.css?v=8" />
+</head>
+<body>
+
+  <section id="view-splash" class="view active">
+    <div class="splash-content">
+      <img src="assets/logo.png" alt="BREIZH4LINE" class="logo" />
+      <div class="dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </section>
+
+  <section id="view-quote" class="view">
+    <div class="quote-content">
+      <div class="drop-star">✦</div>
+      <p>Prenez soin de chaque goutte d’eau, la Terre en dépend !</p>
+    </div>
+  </section>
+
+  <section id="view-home" class="view">
+    <header class="topbar">
+      <button id="btn-menu" class="icon-btn" aria-label="Menu">≡</button>
+      <img src="assets/logo-small.png" alt="BREIZH4LINE" class="logo-mini" />
+      <span class="badge">9</span>
+      <div class="spacer"></div>
+    </header>
+
+    <main class="content">
+      <div class="date-row">
+        <button class="chip" id="chip-start">Chargement...</button>
+        <button class="chip" id="chip-end">...</button>
+        <input type="date" id="dateStart" style="display:none;">
+        <input type="date" id="dateEnd" style="display:none;">
+      </div>
+
+      <div class="card kpi">
+        <div class="liters">
+          <span id="litersValue">...</span>
+          <span class="unit">Litres</span>
+          <span id="costValue" class="unit cost">... €</span> 
+        </div>
+      </div>
+      <h2>Historique</h2>
+
+      <!-- NOUVEAU: Widget de sélection de période dédié pour l'accueil -->
+      <div class="card" id="home-period-card">
+        <div class="card-title" style="margin-bottom: 10px;">
+          Période d'analyse
+          <div class="range-selector" id="homeRangeSelector">
+            <button class="chip active" data-range="day">Jour</button>
+            <button class="chip" data-range="month">Mois</button>
+            <button class="chip" data-range="year">Année</button>
+          </div>
+        </div>
+        <div class="in-card-filter" id="homeDateSelector" style="justify-content: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button class="nav-arrow" id="prevDayHome">&lt;</button>
+            <input type="date" id="homeDatePicker" class="date-picker-input">
+            <button class="nav-arrow" id="nextDayHome">&gt;</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- NOUVEAU: Grille pour les deux graphiques de l'accueil -->
+      <div class="home-grid">
+        <!-- Colonne de gauche : Camembert -->
+        <div class="card chart-card" style="height: 420px;">
+          <div class="card-title">Répartition Volume (%)</div>
+          <canvas id="volumeBreakdownChart"></canvas>
+        </div>
+        <!-- Colonne de droite : Graphique principal -->
+        <div class="card chart-card" style="height: 420px;">
+          <div class="card-title">Historique</div>
+          <div class="in-card-filter">
+            <label for="sensor-select-home" class="sensor-label">Point d'eau :</label>
+            <select id="sensor-select-home" class="sensor-select-all">
+                <option value="ALL">Total (Tous les points d'eau)</option>
+            </select>
+          </div>
+          <canvas id="historyChart"></canvas>
+        </div>
+      </div>
+      
+    </main>
+  </section>
+
+  <section id="view-costs" class="view">
+    <header class="topbar">
+      <button id="btn-menu-costs" class="icon-btn open-menu-btn" aria-label="Menu">≡</button>
+      <img src="assets/logo-small.png" alt="BREIZH4LINE" class="logo-mini" />
+      <span class="badge" id="badge-costs"></span>
+      <div class="spacer"></div>
+      <button class="icon-btn" aria-label="Favoris">★</button>
+    </header>
+
+    <main class="content">
+      <h2>Analyse des Coûts</h2>
+      
+      <!-- NOUVEAU: Widget de sélection de période dédié -->
+      <div class="card" id="costs-period-card">
+        <div class="card-title" style="margin-bottom: 10px;">
+          Période d'analyse
+          <div class="range-selector" id="costsRangeSelector">
+            <button class="chip" data-range="week">Semaine</button>
+            <button class="chip active" data-range="month">Mois</button>
+            <button class="chip" data-range="year">Année</button>
+          </div>
+        </div>
+        <div class="in-card-filter" style="justify-content: center;">
+          <div id="costsDateSelector" style="display: flex; align-items: center; gap: 8px;">
+            <button id="prevPeriodCostsBtn" class="nav-arrow">&lt;</button>
+            <input type="text" id="costsDatePicker" class="date-picker-input" readonly>
+            <button id="nextPeriodCostsBtn" class="nav-arrow">&gt;</button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- NOUVEAU: Grille pour les deux graphiques -->
+      <div class="costs-grid">
+        <!-- Colonne de gauche : Camembert -->
+        <div class="card chart-card">
+          <div class="card-title">Répartition Coûts (€)</div>
+          <canvas id="usageChart"></canvas>
+        </div>
+        <!-- Colonne de droite : Graphique en barres -->
+        <div class="card chart-card">
+          <div class="card-title">Coût par période</div>
+          <div class="in-card-filter">
+            <label for="sensor-select-costs" class="sensor-label">Point d'eau :</label>
+            <select id="sensor-select-costs" class="sensor-select-all">
+                <option value="ALL">Total (Tous les points d'eau)</option>
+            </select>
+          </div>
+          <canvas id="dailyCostChart"></canvas>
+        </div>
+      </div>
+      
+    </main>
+  </section>
+
+  <section id="view-profile" class="view">
+    <header class="topbar">
+      <button class="icon-btn open-menu-btn">≡</button>
+      <h2>Mon Profil</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="saveProfile()">💾</button> 
+    </header>
+  
+    <main class="content">
+      <div class="profile-header">
+        <div class="avatar-wrapper">
+          <img src="assets/avatar.png" id="profile-img-preview" class="big-avatar">
+          <input type="file" id="profile-input-file" accept="image/*" style="display: none;"> 
+          <div class="camera-icon">📷</div>
+        </div>
+      </div>
+  
+      <form id="profile-form" onsubmit="event.preventDefault();">
+        <div class="form-group">
+          <label for="input-prenom">Prénom</label>
+          <input type="text" id="input-prenom" name="prenom" placeholder="Votre prénom">
+        </div>
+        
+        <div class="form-group">
+          <label for="input-nom">Nom</label>
+          <input type="text" id="input-nom" name="nom" placeholder="Votre nom">
+        </div>
+        <div class="form-group">
+          <label for="input-age">Âge</label>
+          <input type="number" id="input-age" placeholder="Votre âge" min="1" max="120">
+      </div>
+      <div class="form-group">
+          <label for="input-genre">Genre</label>
+          <select id="input-genre">
+              <option value="">Sélectionner</option>
+              <option value="Homme">Homme (H)</option>
+              <option value="Femme">Femme (F)</option>
+              <option value="Non précisé">Ne se prononce pas</option>
+          </select>
+      </div>
+      <div class="card" id="user-list-card">
+          <div class="card-title">
+              Membres du Foyer (<span id="user-count">...</span>)
+              <button class="chip" onclick="addUser()">+ Ajouter</button>
+          </div>
+          <ul id="user-list" style="list-style: none; padding: 0;">
+              </ul>
+      </div>
+      
+      <div class="separator accordion-header" onclick="toggleAccordion(this)">
+        🎯 Objectifs <span class="arrow">▼</span>
+      </div>
+      <div class="section-content">
+          <div class="form-group">
+              <label for="habits-motivation">Pourquoi Breizh4Line ?</label>
+              <select id="habits-motivation">
+                  <option value="Economie">💰 Économiser de l'argent</option>
+                  <option value="Ecologie">🌱 Intérêt environnemental</option>
+                  <option value="Curiosite">🤔 Simple curiosité</option>
+                  <option value="Fuites">💧 Détecter des fuites</option>
+              </select>
+          </div>
+      </div>
+      
+      <div class="separator accordion-header" onclick="toggleAccordion(this)">
+          🏠 Logement <span class="arrow">▼</span>
+      </div>
+      <div class="section-content hidden"> <div class="form-group">
+              <label for="habits-logement">Type de logement</label>
+              <select id="habits-logement" onchange="toggleHousingOptions()">
+                  <option value="Appartement">Appartement</option>
+                  <option value="Maison">Maison</option>
+              </select>
+          </div>
+          
+          <div id="sub-maison" class="sub-group hidden">
+              <div class="checkbox-row">
+                  <input type="checkbox" id="habits-jardin" onchange="toggleGardenOptions()">
+                  <label for="habits-jardin">J'ai un jardin</label>
+              </div>
+  
+              <div id="sub-jardin" class="sub-group hidden">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="habits-arrosage">
+                    <label for="habits-arrosage">Arrosage Automatique</label>
+                </div>
+                <div class="form-group">
+                  <label for="habits-piscine">Piscine</label>
+                  <select id="habits-piscine">
+                      <option value="Non">Non</option>
+                      <option value="Hors-sol">Hors-sol</option>
+                      <option value="Enterree">Enterrée</option>
+                  </select>
+                </div>
+              </div>
+          </div>
+      </div>
+      
+      <div class="separator accordion-header" onclick="toggleAccordion(this)">
+          🚰 Habitudes <span class="arrow">▼</span>
+      </div>
+      <div class="section-content hidden"> 
+        <div class="form-group">
+              <label for="habits-eau">Boisson</label>
+              <select id="habits-eau">
+                  <option value="Robinet">Eau du robinet</option>
+                  <option value="Bouteille">Eau en bouteille</option>
+              </select>
+          </div>
+      
+      <div class="form-group">
+          <label>Hygiène principale</label>
+          <div class="radio-group">
+              <label><input type="radio" name="hygiene" value="Douche" checked onchange="toggleShowerOptions()"> Douche</label>
+              <label><input type="radio" name="hygiene" value="Bain" onchange="toggleShowerOptions()"> Bain</label>
+          </div>
+      </div>
+      
+      <div id="sub-douche" class="sub-group">
+          <label for="habits-duree-douche">Temps moyen sous la douche (min)</label>
+          <input type="range" id="habits-duree-douche" min="1" max="30" value="5" oninput="this.nextElementSibling.value = this.value + ' min'">
+          <output>5 min</output>
+      </div>
+      
+      <div class="checkbox-row" style="margin-top:15px;">
+          <input type="checkbox" id="habits-lave-vaisselle" onchange="toggleDishwasher()">
+          <label for="habits-lave-vaisselle">J'ai un lave-vaisselle</label>
+      </div>
+      
+      <div id="sub-lave-vaisselle" class="sub-group hidden">
+          <label for="habits-lv-freq">Utilisation par semaine</label>
+          <input type="number" id="habits-lv-freq" placeholder="Ex: 4 fois" min="1" max="20">
+      </div>
+      </div>
+      </form>
+    </main>
+  </section>
+
+  <!-- ================================================== -->
+  <!-- == NOUVELLE VUE : ALERTES ET CONSEILS == -->
+  <!-- ================================================== -->
+  <section id="view-alerts" class="view">
+    <header class="topbar">
+      <button class="icon-btn open-menu-btn">≡</button>
+      <h2>Analyse et Objectifs</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="generateRecommendations()">🔄</button>
+    </header>
+
+    <main class="content" id="analysis-content">
+      <div class="analysis-grid">
+        <!-- COLONNE DE GAUCHE -->
+        <div class="analysis-main-column">
+          <!-- WIDGET 1 : Période d'analyse -->
+          <div class="card" id="analysis-period-card">
+            <div class="card-title" style="margin-bottom: 0;">
+              Période d'analyse
+            </div>
+            <div class="date-navigation" style="display: flex; justify-content: center; align-items: center; padding: 4px 8px;">
+              <label for="alerts-date-picker" style="margin-right: 8px; font-size: 14px; color: var(--muted);">Choisir une date :</label>
+              <input type="date" id="alerts-date-picker" class="date-picker-input">
+            </div>
+          </div>
+          <!-- WIDGET 2 : Bilan et Analyse -->
+          <div id="recommendations-container">
+            <p style="text-align: center; color: var(--muted);">Choisissez une date et cliquez sur 🔄 pour analyser la consommation de la semaine correspondante.</p>
+          </div>
+        </div>
+        <!-- COLONNE DE DROITE -->
+        <div class="analysis-side-column">
+          <div class="card" id="objectives-container-card">
+            <h3 class="card-title" style="margin-bottom: 15px;">🎯 Mes Objectifs</h3>
+            <ul id="objectives-list" style="margin: 0; padding: 0; list-style-type: none;"></ul>
+          </div>
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <!-- ================================================== -->
+  <!-- == NOUVELLE VUE : PARAMÈTRES == -->
+  <!-- ================================================== -->
+  <section id="view-settings" class="view">
+    <header class="topbar">
+      <button class="icon-btn open-menu-btn">≡</button>
+      <h2>Paramètres</h2>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="saveSensorConfig()">💾</button> 
+    </header>
+
+    <main class="content">
+      <div class="card">
+        <h3>⚙️ Gestion des Capteurs</h3>
+        <p class="muted">Associez ici chaque capteur détecté à un point d'eau spécifique (Douche, Cuisine, etc.). Les capteurs non configurés n'apparaîtront pas dans les graphiques détaillés.</p>
+        
+        <div id="sensor-config-list">
+            <!-- Le contenu sera généré par JavaScript -->
+            <p>Chargement des capteurs...</p>
+        </div>
+
+        <h4 style="margin-top: 24px; margin-bottom: 12px;">Ajouter un nouveau capteur</h4>
+        <div id="add-sensor-form-container">
+            <!-- Le formulaire d'ajout sera inséré ici par JavaScript -->
+        </div>
+      </div>
+    </main>
+  </section>
+
+  <aside id="side-menu" class="side-menu">
+    <div class="side-header">
+      <img src="assets/avatar.png" alt="Profil" class="avatar" id="menu-avatar">
+      <h3 id="menu-username" style="margin:0 0 0 12px; font-size:18px;">Utilisateur</h3>
+      <button id="btn-close-menu" class="close-btn" aria-label="Fermer">✕</button>
+    </div>
+    <nav class="side-list">
+      <a href="#" class="side-link active" data-target="view-home" onclick="goto(viewHome)">Accueil</a>
+      <a href="#" class="side-link" data-target="view-costs" onclick="goto(viewCosts)">Coûts</a>
+      <a href="#" class="side-link" data-target="view-alerts" onclick="goto(viewAlerts)">Analyse et Objectifs</a>
+      <a href="#" class="side-link" data-target="view-settings" onclick="goto(viewSettings)">Paramètres</a>
+      <a href="#" class="side-link" data-target="view-profile" onclick="goto(viewProfile)">Mon Profil</a> 
+    </nav>
+  </aside>
+
+  <div id="overlay" class="overlay"></div>
+
+
+  <!-- NOUVEAU: Toast pour guider l'utilisateur -->
+  <div id="toast-qualify" class="toast">
+      💡 Cliquez sur une barre du graphique pour qualifier la consommation.
+  </div>
+
+  <!-- ========================================== -->
+  <!-- == MODALE POUR QUALIFIER L'ACTIVITÉ == -->
+  <!-- ========================================== -->
+  <div id="activity-modal" class="usage-modal">
+    <h3 class="modal-item-appear" style="--delay: 0.05s;">Qualifier la consommation</h3>
+    <p class="modal-item-appear" style="--delay: 0.1s; text-align: center; margin-top: -10px; margin-bottom: 20px; font-size: 15px;">
+      Le <strong id="modal-date">...</strong> à <strong id="modal-time">...</strong> : <strong id="modal-liters">...</strong> litres.
+    </p>
+
+    <form id="activity-form" onsubmit="event.preventDefault(); saveActivity();">
+      <div class="form-group modal-item-appear" style="--delay: 0.15s;">
+        <label for="activity-select">Quelle était cette activité ?</label>
+        <select id="activity-select" name="activity" required>
+          <option value="">-- Choisir une activité --</option>
+          <option value="douche">Douche</option>
+          <option value="vaisselle">Vaisselle (main)</option>
+          <option value="cuisine">Cuisine (préparation)</option>
+          <option value="arrosage">Arrosage</option>
+          <option value="autre">Autre</option>
+        </select>
+      </div>
+
+      <!-- NOUVEAU: Section spécifique pour la vaisselle, cachée par défaut -->
+      <div id="dishwashing-info-container" class="collapsible-section activity-specific-info">
+        <div class="info-box">
+          <p><strong>Quelques repères pour la vaisselle :</strong></p>
+          <ul>
+            <li><strong>Moyenne constatée :</strong> ~42 Litres (vaisselle familiale).</li>
+            <li><strong>Méthode "Gaspillage" :</strong> Jusqu'à 100 Litres (robinet ouvert).</li>
+            <li><strong>Méthode "Éco" :</strong> 10 - 20 Litres (avec 2 bacs).</li>
+          </ul>
+        </div>
+
+        <!-- NOUVEAU: Groupe pour l'objectif et le bouton -->
+        <div id="goal-input-group" class="form-group" style="margin-top: 20px;">
+          <label for="goal-input-liters">Fixer mon prochain objectif (en Litres)</label>
+          <div class="input-with-button">
+            <input type="number" id="goal-input-liters" placeholder="Ex: 25">
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+
+        <!-- NOUVEAU: Section pour les conseils, cachée par défaut -->
+        <div id="dishwashing-tips-container" class="collapsible-section goal-tips">
+            <div class="info-box" style="background-color: #e0f2fe; border-color: #0ea5e9;">
+                <p style="font-weight: 700; color: #0369a1;">💡 Conseils pour atteindre votre objectif :</p>
+                <ul>
+                    <li>Ne faites pas la vaisselle sous l'eau courante. Remplissez un bac pour laver et un autre pour rincer.
+                        <small style="display: block; color: #075985;">(Source: C.I.Eau)</small>
+                    </li>
+                    <li style="margin-top: 8px;">Équipez votre robinet d'un mousseur (aérateur). Il réduit le débit de 30 à 50% sans perte de confort.
+                        <small style="display: block; color: #075985;">(Source: ADEME)</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+      </div>
+
+      <!-- NOUVEAU: Section spécifique pour la DOUCHE, cachée par défaut -->
+      <div id="shower-info-container" class="collapsible-section activity-specific-info">
+        <div class="info-box">
+          <p><strong>Quelques repères pour la douche :</strong></p>
+          <ul>
+            <li><strong>Débit standard :</strong> 15 à 20 Litres / minute.</li>
+            <li><strong>Douche de 5 min :</strong> ~85 Litres.</li>
+            <li><strong>Avec pommeau éco :</strong> ~40 Litres (50% d'économie).</li>
+          </ul>
+        </div>
+
+        <div id="shower-goal-input-group" class="form-group" style="margin-top: 20px;">
+          <label for="shower-goal-input">Fixer un objectif de durée (en minutes)</label>
+          <div class="input-with-button">
+            <input type="number" id="shower-goal-input" placeholder="Ex: 5">
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+
+        <div id="shower-tips-container" class="collapsible-section goal-tips">
+            <div class="info-box" style="background-color: #e0f2fe; border-color: #0ea5e9;">
+                <p style="font-weight: 700; color: #0369a1;">💡 Conseils pour des douches plus économes :</p>
+                <ul>
+                    <li>Installez un <strong>pommeau de douche économique</strong>. Il réduit le débit de moitié sans perte de confort. <small style="display: block; color: #075985;">(Source: ADEME)</small></li>
+                    <li style="margin-top: 8px;">Utilisez un minuteur ou un sablier de douche pour maîtriser la durée. Viser <strong>moins de 5 minutes</strong> est un excellent objectif.</li>
+                </ul>
+            </div>
+        </div>
+      </div>
+
+      <!-- NOUVEAU: Section spécifique pour l'ARROSAGE, cachée par défaut -->
+      <div id="watering-info-container" class="collapsible-section activity-specific-info">
+        <div class="info-box">
+          <p><strong>Quelques repères pour l'arrosage :</strong></p>
+          <ul>
+            <li><strong>Tuyau d'arrosage :</strong> ~18 Litres / minute.</li>
+            <li><strong>30 min d'arrosage :</strong> Plus de 500 Litres !</li>
+            <li><strong>Arrosoir de 10L :</strong> Permet un usage ciblé et maîtrisé.</li>
+          </ul>
+        </div>
+
+        <div id="watering-goal-input-group" class="form-group" style="margin-top: 20px;">
+          <label for="watering-goal-input">Mon prochain objectif d'arrosage (en Litres)</label>
+          <div class="input-with-button">
+            <input type="number" id="watering-goal-input" placeholder="Ex: 100">
+            <button type="submit" class="btn btn-primary">OK</button>
+          </div>
+        </div>
+
+        <div id="watering-tips-container" class="collapsible-section goal-tips">
+            <div class="info-box" style="background-color: #e0f2fe; border-color: #0ea5e9;">
+                <p style="font-weight: 700; color: #0369a1;">💡 Conseils pour un arrosage efficace :</p>
+                <ul>
+                    <li>Arrosez <strong>le soir ou tôt le matin</strong> pour limiter l'évaporation. <small style="display: block; color: #075985;">(Source: C.I.Eau)</small></li>
+                    <li style="margin-top: 8px;">Installez un <strong>système de goutte-à-goutte</strong> et utilisez du <strong>paillage</strong> pour garder l'humidité au pied des plantes.</li>
+                </ul>
+            </div>
+        </div>
+      </div>
+      <!-- FIN de la nouvelle section -->
+
+      <div class="modal-actions modal-item-appear" style="--delay: 0.2s;">
+        <!-- Le bouton "Enregistrer" principal est déplacé. Celui-ci devient un bouton "Fermer" -->
+        <button type="button" id="close-activity-modal" class="btn btn-secondary">Fermer</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- == MODALE D'INTERACTION GÉNÉRIQUE == -->
+  <!-- ========================================== -->
+  <div id="interaction-modal" class="custom-modal">
+    <h3 id="modal-title">Titre</h3>
+    <p id="modal-message">Message...</p>
+    <input type="text" id="modal-input" style="display: none;">
+    <div class="modal-actions">
+      <button id="modal-btn-cancel" class="btn btn-secondary">Annuler</button>
+      <button id="modal-btn-confirm" class="btn btn-primary">OK</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="app.js?v=14"></script>
+</body>
+</html>

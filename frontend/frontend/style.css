@@ -1,0 +1,1084 @@
+:root {
+  --bg: #f2f4f7;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #0b67ff;
+  --accent: #10bffd;
+  --shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ========================================= */
+/* VUES & ANIMATIONS FLUIDES */
+/* ========================================= */
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view {
+  display: none;
+  min-height: 100dvh;
+  width: 100%;
+  max-width: 420px; /* Mobile par défaut */
+  margin: 0 auto;
+  position: relative;
+  /* Plus de barre de nav en bas, donc padding réduit */
+  padding-bottom: 20px; 
+}
+
+.view.active {
+  display: block;
+  animation: fadeSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* SPLASH SCREEN */
+.splash-content {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+}
+.logo {
+  width: 160px;
+  height: auto;
+}
+.dots {
+  display: flex;
+  gap: 12px;
+}
+.dots span {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: bounce 1s infinite ease-in-out;
+}
+.dots span:nth-child(2) { animation-delay: 0.15s; background: #0b6bd6; }
+.dots span:nth-child(3) { animation-delay: 0.3s; background: #51d2ff; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-8px); }
+}
+
+/* QUOTE SCREEN */
+.quote-content {
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  text-align: center;
+  gap: 16px;
+}
+.drop-star {
+  font-size: 28px;
+  color: var(--primary);
+}
+.quote-content p {
+  font-size: 22px;
+  line-height: 1.35;
+}
+
+/* ========================================= */
+/* ELEMENTS D'INTERFACE */
+/* ========================================= */
+
+/* TOPBAR */
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  background: var(--bg);
+}
+.icon-btn {
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  font-size: 20px;
+  cursor: pointer;
+}
+.logo-mini {
+  height: 28px;
+  margin-left: 4px;
+}
+.badge {
+  position: absolute;
+  left: 82px;
+  top: 10px;
+  background: #ff2d55;
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+.spacer { flex: 1; }
+
+/* CONTENT AREA */
+.content {
+  padding: 8px 16px 16px;
+}
+h2 {
+  margin: 0 0 10px 4px;
+  font-size: 20px;
+}
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 14px;
+}
+.kpi {
+  /* RETOUR À LA FORME ORIGINALE - Corrigée et droite */
+  width: 320px; /* Assez grand pour le contenu */
+  height: 320px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  /* La forme de base avec un coin pointu (en haut à gauche) */
+  border-radius: 0 50% 50% 50%;
+  /* On tourne la forme pour que la pointe soit en haut */
+  transform: rotate(45deg);
+  background: var(--card); /* Le background doit être sur l'élément lui-même */
+  box-shadow: 0 12px 28px rgba(11, 103, 255, 0.2); /* Ombre plus prononcée */
+}
+
+/* KPI CARD */
+.date-row {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 60px; /* Espace au-dessus de la goutte (encore augmenté) */
+}
+.chip {
+  border: none;
+  background: #eef2ff;
+  color: #1e293b;
+  padding: 10px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+}
+.liters {
+  display: flex; /* Toujours en flexbox */
+  flex-direction: column; /* Mais en colonne */
+  align-items: center; /* Pour tout centrer horizontalement */
+  gap: 0; /* On ajuste l'espacement */
+  /* On annule la rotation pour redresser le contenu */
+  transform: rotate(-45deg);
+}
+.liters #litersValue {
+  font-size: 72px;
+  font-weight: 800;
+  letter-spacing: 1px; /* On garde l'espacement des lettres */
+  line-height: 1; /* On réduit la hauteur de ligne pour rapprocher le texte en dessous */
+  margin-bottom: 8px; /* On ajoute une petite marge en dessous du grand nombre */
+}
+.liters .cost {
+  color: var(--primary);
+  font-size: 18px;
+  font-weight: 700;
+  margin-top: 4px;
+}
+/* Style commun pour "Litres" et le coût */
+.liters .unit {
+  color: #19aaff;
+  font-weight: 700;
+}
+
+/* CHART CARDS */
+.chart-card {
+  padding: 12px 12px 6px;
+  height: 440px; 
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+.chart-card canvas {
+  flex-grow: 1;
+  width: 100% !important;
+  min-height: 0;
+}
+.card-title {
+  font-weight: 700;
+  color: #0f172a;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0;
+  margin-bottom: 0;
+  padding: 0 8px;
+}
+
+/* FILTRE INTÉGRÉ À LA CARTE */
+.in-card-filter {
+    padding: 0 8px 10px 8px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.sensor-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.in-card-filter select {
+    flex-grow: 1;
+    width: auto;
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #334155;
+    font-size: 14px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.in-card-filter select:focus {
+    border-color: var(--primary);
+    background-color: #fff;
+}
+
+/* SÉLECTEURS DE PLAGE */
+.range-selector {
+  display: flex;
+  gap: 4px;
+  background: #eef2ff;
+  padding: 2px;
+  border-radius: 8px;
+  margin-left: 10px;
+  font-size: 14px;
+}
+.range-selector .chip {
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: transparent;
+  transition: background 0.2s;
+  font-weight: 500;
+  color: var(--muted);
+}
+.range-selector .chip.active {
+  background: var(--card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+/* DATE PICKER */
+.date-picker-input {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px 8px;
+    font-family: inherit;
+    color: var(--primary);
+    background: #eef2ff;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+.date-picker-input[type="month"],
+.date-picker-input[type="number"] {
+    text-align: center;
+    min-width: 130px; /* Assure une largeur minimale pour la lisibilité */
+}
+.date-picker-input:focus {
+    border-color: var(--primary);
+    background: #fff;
+}
+
+/* NAV ARROWS */
+.nav-arrow {
+    background: transparent;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 4px 12px;
+    color: var(--primary);
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.nav-arrow:hover { background: #eef2ff; }
+
+/* SIDE MENU */
+.side-menu {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 82%;
+  max-width: 320px;
+  background: #d9d9d9;
+  translate: -100% 0;
+  transition: translate .28s ease;
+  z-index: 20;
+  padding: 18px;
+}
+.side-menu.open { translate: 0 0; }
+.side-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #fff;
+}
+.close-btn {
+  border: none;
+  background: transparent;
+  font-size: 28px;
+  cursor: pointer;
+  line-height: 1;
+}
+.side-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+.side-link {
+  text-decoration: none;
+  color: #0f172a;
+  font-weight: 800;
+  font-size: 22px;
+}
+.side-link.active { color: #0b6bd6; }
+
+/* Overlay */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+  z-index: 15;
+}
+.overlay.show { opacity: 1; pointer-events: auto; }
+
+/* CANVAS fix */
+canvas { display: block; width: 100%; }
+
+
+/* ============================================================ */
+/* 🖥️ VERSION PC / DESKTOP (Écrans > 1024px) */
+/* ============================================================ */
+
+@media (min-width: 1024px) {
+
+  .view {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-bottom: 20px;
+  }
+
+  .content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .content h2 {
+    grid-column: 1 / -1;
+    font-size: 28px;
+    margin-bottom: 16px;
+    margin-top: 32px;
+  }
+  
+  .date-row {
+    grid-column: 1 / -1; /* Fait en sorte que la ligne des dates s'étende sur toute la largeur */
+    margin-bottom: 60px; /* Espace augmenté et unifié avec la vue mobile */
+  }
+
+  .kpi {
+    grid-column: 1 / -1;
+    /* La disposition en colonne et le centrage sont déjà gérés par le style mobile */
+    /* On ajuste juste le padding et le gap pour les grands écrans */
+    gap: 20px;
+    padding: 32px;
+  }
+  .kpi .date-row { margin-bottom: 0; }
+  .liters #litersValue { font-size: 96px; } 
+  .chip { padding: 12px 16px; font-size: 16px; }
+  .date-picker-input { padding: 8px 12px; font-size: 16px; }
+
+  .chart-card {
+    height: 500px; 
+  }
+
+  .in-card-filter select {
+      max-width: 300px;
+  }
+  
+  .side-menu { max-width: 400px; }
+}
+
+/* ========================================= */
+/* STYLES PAGE PROFIL (AJOUTÉS) */
+/* ========================================= */
+
+.profile-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.avatar-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.big-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--card);
+  box-shadow: var(--shadow);
+}
+
+.camera-icon {
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 32px;
+  height: 32px;
+  background: var(--primary);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  border: 2px solid var(--card);
+}
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-weight: 600; margin-bottom: 6px; }
+.form-group input, .form-group textarea {
+  width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: inherit; font-size: 16px;
+}
+.form-group small { display: block; margin-top: 6px; color: var(--muted); font-size: 13px; }
+
+/* --- TOAST MESSAGE (Notification) --- */
+.toast {
+  position: fixed;
+  top: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #4caf50; /* Vert pour Succès */
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 8px;
+  z-index: 1000;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+.toast.show {
+  opacity: 1;
+}
+
+/* Styles pour le formulaire avancé */
+.hidden {
+  display: none !important;
+}
+
+.sub-group {
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border-left: 3px solid var(--primary);
+  margin-left: 10px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.checkbox-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.separator {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 20px 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 5px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+/* --- ACCORDÉON --- */
+
+/* Le titre cliquable */
+.accordion-header {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between; /* Titre à gauche, flèche à droite */
+  align-items: center;
+  transition: background 0.2s;
+  padding: 10px 5px;
+  border-radius: 8px;
+}
+
+.accordion-header:hover {
+  background-color: #eef2ff; /* Petit effet au survol */
+}
+
+/* La flèche animée */
+.arrow {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+/* Quand la section est fermée (on ajoute une classe .collapsed via JS) */
+.accordion-header.collapsed .arrow {
+  transform: rotate(-90deg); /* La flèche pointe vers la gauche */
+}
+
+.accordion-header.collapsed {
+  color: var(--muted); /* Le titre se grise un peu quand c'est fermé */
+  border-bottom: none; /* On enlève la ligne du separator */
+}
+
+/* Le contenu */
+.section-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out; /* Animation fluide */
+  padding-bottom: 10px;
+}
+
+/* Pour cacher le contenu */
+.section-content.hidden {
+  display: none;
+}
+
+.user-list-container {
+  margin-top: 30px;
+}
+
+.user-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.user-list-header h3 { margin: 0; font-size: 18px; }
+
+.user-list li {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 0; border-bottom: 1px solid #f1f5f9; list-style-type: none;
+}
+
+.user-info span:first-child { font-weight: 600; }
+.user-info span:last-child { font-size: 14px; color: var(--muted); margin-left: 8px; }
+.delete-user-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 18px; }
+
+/* Style pour la case à cocher "sportif" */
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-right: 12px;
+  accent-color: var(--primary); /* Donne la couleur primaire à la coche */
+}
+
+/* ======================================= */
+/* == SECTION ALERTES & CONSEILS == */
+/* ======================================= */
+
+.reco-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.reco-card h3 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reco-summary {
+  display: flex;
+  justify-content: space-around;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.reco-summary div span:first-child {
+  font-size: 24px;
+  font-weight: 700;
+  display: block;
+}
+.reco-summary div span.ideal { color: var(--primary); }
+.reco-summary div span.real { color: #f59e0b; } /* Jaune/Orange */
+.reco-summary div span:last-child { font-size: 12px; color: var(--muted); }
+
+.reco-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+.reco-item:last-child { border-bottom: none; }
+.reco-item-name { font-weight: 600; }
+.reco-item-values { font-size: 14px; text-align: right; }
+.reco-item-values .real-value { font-weight: 600; }
+.reco-item-values .ideal-value { color: var(--muted); }
+
+/* NOUVEAU: Grille pour la page Analyse et Objectifs (version corrigée) */
+@media (min-width: 1024px) {
+  #analysis-content {
+    padding: 16px 24px;
+    display: block; /* Annule la grille par défaut de .content */
+  }
+
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr; /* 2/3 pour la colonne principale, 1/3 pour les objectifs */
+    gap: 24px;
+    align-items: start;
+  }
+
+  .analysis-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .analysis-side-column #objectives-container-card {
+    position: sticky; /* L'encart des objectifs reste visible au scroll */
+    top: 84px; /* 64px (topbar) + 20px (marge) */
+  }
+
+  /* NOUVEAU: Grille pour la page Coûts */
+  .costs-grid {
+    grid-column: 1 / -1; /* Prend toute la largeur */
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* 1/3 pour le camembert, 2/3 pour le graphe */
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* NOUVEAU: Grille pour la page Accueil */
+  .home-grid {
+    grid-column: 1 / -1; /* Prend toute la largeur */
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* 1/3 pour le camembert, 2/3 pour le graphe */
+    gap: 24px;
+    align-items: start;
+  }
+}
+
+/* ======================================= */
+/* == MODAL DE QUALIFICATION D'USAGE    == */
+/* ======================================= */
+
+.usage-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 90%;
+  max-width: 380px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  z-index: 100;
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: none; /* Caché par défaut */
+}
+
+.usage-modal.show {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.usage-modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+  text-align: center;
+}
+
+.usage-modal .form-group {
+  margin-bottom: 20px;
+}
+
+.usage-modal select,
+.usage-modal input[type="text"] {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 16px;
+  background-color: #f8fafc;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.modal-actions .btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+}
+
+/* Style pour le bloc d'info dans la modale */
+.info-box {
+  background-color: #eef2ff;
+  border-left: 4px solid var(--primary);
+  padding: 12px;
+  border-radius: 0 8px 8px 0;
+  font-size: 14px;
+  color: #334155;
+}
+.info-box p { margin: 0 0 8px 0; }
+.info-box ul { margin: 0; padding-left: 20px; }
+.info-box li { margin-bottom: 4px; }
+
+/* Style pour la liste des objectifs */
+#objectives-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px;
+  border-bottom: 1px solid #f1f5f9;
+  gap: 12px; /* Ajoute un espace entre les détails et le bouton */
+}
+#objectives-list li:last-child { border-bottom: none; }
+#objectives-list .objective-details {
+  display: flex;
+  flex-direction: column; /* Empile le nom et la valeur */
+  flex-grow: 1;
+}
+#objectives-list .objective-name { font-weight: 600; }
+#objectives-list li.validated .objective-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+#objectives-list li.validated .objective-value {
+  font-weight: 400; /* Moins gras une fois validé */
+}
+#objectives-list .objective-value { font-weight: 700; font-size: 15px; color: var(--primary); margin-top: 2px; }
+#objectives-list .objective-status { font-size: 12px; color: var(--muted); }
+
+/* NOUVEAU: Style pour le bouton de suppression */
+.delete-objective-btn {
+  background: none;
+  border: none;
+  color: #ef4444; /* Rouge pour la suppression */
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+}
+
+/* NOUVEAU: Style pour aligner l'input et le bouton OK */
+.input-with-button {
+  display: flex;
+  gap: 8px;
+}
+.input-with-button input {
+  flex-grow: 1;
+}
+.input-with-button button {
+  flex-shrink: 0;
+  padding: 10px 20px !important;
+}
+
+/* NOUVEAU: Style pour les sections animées dans la modale */
+.collapsible-section {
+  transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, transform 0.4s ease-in-out, margin-top 0.4s ease-in-out;
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-10px);
+  /* Forcer les marges à 0 quand c'est caché */
+  margin-top: 0 !important;
+}
+
+.collapsible-section.show {
+  max-height: 500px; /* Une hauteur suffisante pour contenir le contenu */
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Rétablir la marge quand la section est visible */
+.collapsible-section.show.activity-specific-info { margin-top: 20px !important; }
+
+/* NOUVEAU: Style pour l'animation en cascade des éléments de la modale */
+.modal-item-appear {
+  opacity: 0;
+  transform: translateY(15px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  /* Utilise une variable CSS pour le délai, définie dans le HTML */
+  transition-delay: var(--delay, 0s);
+}
+
+/* Lorsque la modale est visible, on déclenche l'animation des éléments enfants */
+.usage-modal.show .modal-item-appear {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* On s'assure que le formulaire ne prend pas de place avant l'animation */
+.usage-modal form { min-height: 230px; }
+
+/* ======================================= */
+/* == PAGE PARAMÈTRES (Sensor Config)   == */
+/* ======================================= */
+
+#sensor-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px; /* Espace entre chaque ligne de capteur */
+}
+
+.sensor-config-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f1f5f9; /* Ligne de séparation fine */
+}
+
+.sensor-config-item:last-child {
+    border-bottom: none; /* Pas de ligne pour le dernier élément */
+}
+
+.sensor-mac-label {
+    font-family: 'Courier New', Courier, monospace; /* Police "tech" pour l'adresse MAC */
+    font-size: 14px;
+    color: var(--muted);
+    flex-shrink: 0; /* Empêche le label de se réduire */
+    width: 160px; /* Largeur fixe pour un alignement parfait */
+}
+
+.sensor-name-input {
+    /* On réutilise le style des autres select pour la cohérence */
+    flex-grow: 1;
+    width: auto;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    color: #334155;
+    font-size: 15px;
+    font-weight: 500;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.sensor-name-input:focus {
+    border-color: var(--primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 3px rgba(11, 103, 255, 0.1);
+}
+
+/* Style pour le formulaire d'ajout manuel */
+.add-sensor-form {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.add-sensor-form input,
+.add-sensor-form select {
+    /* On applique le même style que les selects ci-dessus */
+    flex-grow: 1;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
+    font-size: 15px;
+}
+
+.add-sensor-form button {
+    /* Style de bouton primaire */
+    padding: 9px 16px;
+    border: none;
+    background-color: var(--primary);
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.add-sensor-form button:hover {
+    background-color: #0a58d1; /* Un peu plus foncé au survol */
+}
+
+/* ======================================= */
+/* == MODALE GÉNÉRIQUE (CUSTOM)         == */
+/* ======================================= */
+
+.custom-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 90%;
+  max-width: 360px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  z-index: 200; /* Au-dessus de tout */
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: none;
+}
+
+.custom-modal.show {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.custom-modal h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.custom-modal p {
+  margin-bottom: 20px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.custom-modal input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  background-color: #f8fafc;
+}
+
+.custom-modal .modal-actions {
+  margin-top: 0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #0a58d1;
+}
+
+.btn-secondary {
+  background-color: #e2e8f0;
+  color: var(--text);
+}
+.btn-secondary:hover {
+  background-color: #cbd5e1;
+}
