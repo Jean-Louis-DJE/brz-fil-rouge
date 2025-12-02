@@ -167,7 +167,10 @@ function openActivityModal(date, time, liters, macAddress) {
 // Fonction pour fermer la modale
 function closeActivityModal() {
     activityModal.classList.remove('show');
-    overlay.classList.remove('show');
+    // On ne cache l'overlay que si la modale d'interaction n'est pas ouverte
+    if (!document.getElementById('interaction-modal').classList.contains('show')) {
+        overlay.classList.remove('show');
+    }
     // Cacher toutes les sections spécifiques
     document.querySelectorAll('.activity-specific-info').forEach(el => el.classList.remove('show'));
     // Cacher toutes les sections de conseils
@@ -175,6 +178,63 @@ function closeActivityModal() {
     // Ré-afficher tous les champs de saisie d'objectif
     document.querySelectorAll('.input-with-button').forEach(el => el.parentElement.style.display = 'block');
     activityForm.reset(); // Réinitialise le formulaire
+}
+
+// ==========================================
+// MODALE GÉNÉRIQUE (Interaction)
+// ==========================================
+let activeModalResolve = null;
+
+function showModal(title, message, options = {}) {
+    return new Promise((resolve) => {
+        activeModalResolve = resolve; // Store resolve to handle overlay click
+
+        const modal = document.getElementById('interaction-modal');
+        const titleEl = document.getElementById('modal-title');
+        const messageEl = document.getElementById('modal-message');
+        const inputEl = document.getElementById('modal-input');
+        const btnConfirm = document.getElementById('modal-btn-confirm');
+        const btnCancel = document.getElementById('modal-btn-cancel');
+
+        titleEl.textContent = title;
+        messageEl.innerHTML = message.replace(/\n/g, '<br>');
+        
+        inputEl.value = options.inputValue || '';
+        inputEl.placeholder = options.inputPlaceholder || '';
+        inputEl.style.display = options.showInput ? 'block' : 'none';
+        inputEl.type = options.inputType || 'text';
+
+        btnConfirm.textContent = options.confirmText || 'OK';
+        btnCancel.textContent = options.cancelText || 'Annuler';
+        
+        modal.classList.add('show');
+        overlay.classList.add('show');
+
+        // One-time event listeners
+        const onConfirm = () => {
+            const value = options.showInput ? inputEl.value : true;
+            closeInteractionModal();
+            resolve(value);
+        };
+
+        const onCancel = () => {
+            closeInteractionModal();
+            resolve(options.showInput ? null : false);
+        };
+
+        btnConfirm.onclick = onConfirm;
+        btnCancel.onclick = onCancel;
+    });
+}
+
+function closeInteractionModal() {
+    const modal = document.getElementById('interaction-modal');
+    modal.classList.remove('show');
+    // Only hide overlay if no other modal is open
+    if (!document.getElementById('activity-modal').classList.contains('show') && !document.getElementById('side-menu').classList.contains('open')) {
+        overlay.classList.remove('show');
+    }
+    activeModalResolve = null;
 }
 
 // Fonction pour sauvegarder l'activité
@@ -198,19 +258,19 @@ function saveActivity() {
     let tipsContainer = null;
     let goalInputGroupToHide = null;
 
-    if (activity === 'vaisselle_main' && goalInput.value) { // CORRECTION: Retour à la valeur dynamique
+    if (activity === 'vaisselle_main' && goalInput.value) {
         goalValue = parseFloat(goalInput.value);
         goalName = 'Prochaine Vaisselle';
         tipsContainer = dishwashingTipsContainer;
         goalInputGroupToHide = goalInput.closest('.form-group');
 
-    } else if ((activity === 'douche_courte' || activity === 'douche_longue') && showerGoalInput.value) { // CORRECTION: Retour aux valeurs dynamiques
+    } else if (activity === 'douche_courte' || activity === 'douche_longue') {
         goalValue = parseFloat(showerGoalInput.value); // La valeur est maintenant en Litres
         goalName = `Prochaine Douche`;
         tipsContainer = showerTipsContainer;
         goalInputGroupToHide = showerGoalInput.closest('.form-group');
 
-    } else if (activity.startsWith('arrosage_') && wateringGoalInput.value) { // CORRECTION: Retour à la valeur dynamique
+    } else if (activity.startsWith('arrosage_')) {
         goalValue = parseFloat(wateringGoalInput.value);
         goalName = 'Prochain Arrosage';
         tipsContainer = wateringTipsContainer;
@@ -287,20 +347,40 @@ function renderObjectives() {
         return;
     }
 
-    listEl.innerHTML = userObjectives.map(obj => `
-        <li>
-            <div class="objective-details">
-                <span class="objective-name">${obj.nom_objectif}</span> 
-                <span class="objective-value">${obj.valeur_cible} ${obj.unite}</span>
-            </div>
-            <button class="delete-objective-btn" onclick="deleteObjective(${obj.id})">🗑️</button>
-        </li>
-    `).join('');
+    listEl.innerHTML = userObjectives
+        .sort((a, b) => (a.statut === 'validé' ? 1 : -1) - (b.statut === 'validé' ? 1 : -1)) // Trie les objectifs validés à la fin
+        .map(obj => {
+            const isSuccess = obj.valeur_reelle !== null && parseFloat(obj.valeur_reelle) <= parseFloat(obj.valeur_cible);
+            const statusClass = obj.statut === 'validé' ? 'validated' : '';
+            const emoji = obj.statut === 'validé' ? (isSuccess ? '✅' : '❌') : '🎯';
+
+            let valueHtml;
+            if (obj.statut === 'validé') {
+                valueHtml = `<span class="objective-value">${obj.valeur_reelle} ${obj.unite} / ${obj.valeur_cible} ${obj.unite}</span>`;
+            } else {
+                valueHtml = `<span class="objective-value">${obj.valeur_cible} ${obj.unite}</span>`;
+            }
+
+            return `
+                <li class="${statusClass}">
+                    <div class="objective-details">
+                        <span class="objective-name">${emoji} ${obj.nom_objectif}</span> 
+                        ${valueHtml}
+                    </div>
+                    <button class="delete-objective-btn" onclick="deleteObjective(${obj.id})">🗑️</button>
+                </li>`;
+        }).join('');
 }
 
 // NOUVEAU: Fonction pour supprimer un objectif
 async function deleteObjective(objectiveId) {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer cet objectif ?")) {
+    const confirmDelete = await showModal(
+        "Supprimer l'objectif",
+        "Êtes-vous sûr de vouloir supprimer cet objectif ?",
+        { confirmText: "Supprimer", cancelText: "Annuler" }
+    );
+
+    if (!confirmDelete) {
         return;
     }
 
@@ -313,6 +393,48 @@ async function deleteObjective(objectiveId) {
         }
     } catch (error) {
         showNotification("Erreur de connexion lors de la suppression.", true);
+    }
+}
+
+// NOUVEAU: Fonction pour marquer un objectif comme validé
+async function validateObjective(objectiveId, finalValue) {
+    try {
+        const response = await fetch(`${API_BASE_URL}update_objective_status.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: objectiveId, finalValue: finalValue })
+        });
+        const result = await response.json();
+        if (result.success) {
+            // Recharger les objectifs pour mettre à jour l'affichage partout
+            await loadObjectives();
+        }
+    } catch (error) {
+        console.error("Erreur lors de la validation de l'objectif:", error);
+    }
+}
+
+// NOUVEAU: Fonction utilitaire pour ajouter un objectif (réutilisée)
+async function addObjective(name, target) {
+    try {
+        const response = await fetch(`${API_BASE_URL}add_objective.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name: name,
+                target: target,
+                unit: 'L'
+            })
+        });
+        const result = await response.json();
+        if (result.success) {
+            showNotification(`Nouvel objectif fixé : ${target} L pour "${name}"`);
+            loadObjectives();
+        } else {
+            showNotification("Erreur lors de la création de l'objectif", true);
+        }
+    } catch (err) {
+        console.error(err);
     }
 }
 
@@ -340,11 +462,11 @@ activitySelect.addEventListener('change', () => {
     document.querySelectorAll('.activity-specific-info').forEach(el => el.classList.remove('show'));
 
     // Afficher la section correspondante
-    if (selectedActivity === 'vaisselle_main') { // CORRECTION: Utiliser la valeur dynamique
+    if (selectedActivity === 'vaisselle_main') {
         dishwashingInfoContainer.classList.add('show');
-    } else if (selectedActivity === 'douche_courte' || selectedActivity === 'douche_longue') { // CORRECTION: Utiliser les valeurs dynamiques
+    } else if (selectedActivity === 'douche_courte' || selectedActivity === 'douche_longue') {
         showerInfoContainer.classList.add('show');
-    } else if (selectedActivity.startsWith('arrosage_')) { // CORRECTION: Utiliser la valeur dynamique
+    } else if (selectedActivity.startsWith('arrosage_')) {
         wateringInfoContainer.classList.add('show');
     }
     // Pour les autres cas (lave-linge, etc.), rien ne s'affiche, ce qui est le comportement souhaité.
@@ -396,6 +518,10 @@ closeModalBtn?.addEventListener('click', closeActivityModal);
 overlay?.addEventListener('click', () => {
     closeMenu();
     closeActivityModal();
+    if (activeModalResolve) {
+        activeModalResolve(null); // Treat as cancel
+        closeInteractionModal();
+    }
 });
 
 // ==========================================
@@ -898,6 +1024,7 @@ function populateSensorSelectors() {
 
 async function loadProfile() {
     try {
+        // 1. Charger les infos utilisateur de base
         const res = await fetch(`${API_BASE_URL}get_profile.php`);
         if (!res.ok) throw new Error(`Échec du chargement du profil (HTTP ${res.status})`);
 
@@ -906,10 +1033,6 @@ async function loadProfile() {
 
         document.getElementById('input-nom').value = user.nom || '';
         document.getElementById('input-prenom').value = user.prenom || '';
-        document.getElementById('input-habitudes').value = user.habitudes || '';
-        document.getElementById('input-departement').value = user.departement || '';
-        document.getElementById('input-departement').value = user.departement || '';
-        document.getElementById('input-sportif').checked = user.is_sportif == 1;
         
         if (user.avatar) {
             const imgUrl = `${user.avatar}?t=${new Date().getTime()}`;
@@ -919,35 +1042,102 @@ async function loadProfile() {
         
         document.getElementById('menu-username').textContent = `${user.prenom || ''} ${user.nom || ''}`.trim() || 'Utilisateur';
 
+        // 2. Charger les habitudes détaillées
+        await loadHabits(user.id);
+
     } catch (err) {
         console.error("Erreur chargement profil:", err);
-        // Si l'erreur vient du fetch (ex: 404), on n'affiche pas de notification
-        // car le problème est probablement côté serveur et non une action utilisateur.
         if (err.message.includes("JSON")) {
              showNotification("Erreur de réponse du serveur pour le profil.", true);
         }
     }
 }
 
+async function loadHabits(userId) {
+    try {
+        const res = await fetch(`${API_BASE_URL}get_habits.php?user_id=${userId}`);
+        const habits = await res.json();
+
+        if (habits) {
+            // Textes / Selects
+            if(habits.motivation) document.getElementById('habits-motivation').value = habits.motivation;
+            if(habits.logement) document.getElementById('habits-logement').value = habits.logement;
+            if(habits.piscine) document.getElementById('habits-piscine').value = habits.piscine;
+            if(habits.eau_boisson) document.getElementById('habits-eau').value = habits.eau_boisson;
+            
+            // Radios (Hygiène)
+            if (habits.douche_bain) {
+                const radio = document.querySelector(`input[name="hygiene"][value="${habits.douche_bain}"]`);
+                if (radio) radio.checked = true;
+            }
+
+            // Checkboxes
+            document.getElementById('habits-jardin').checked = (habits.jardin == 1);
+            document.getElementById('habits-arrosage').checked = (habits.arrosage_auto == 1);
+            document.getElementById('habits-lave-vaisselle').checked = (habits.lave_vaisselle == 1);
+
+            // Ranges / Nombres
+            if(habits.duree_douche) {
+                const range = document.getElementById('habits-duree-douche');
+                range.value = habits.duree_douche;
+                range.nextElementSibling.value = habits.duree_douche + ' min';
+            }
+            if(habits.lave_vaisselle_freq) document.getElementById('habits-lv-freq').value = habits.lave_vaisselle_freq;
+        }
+
+        // Synchroniser l'affichage (montrer/cacher les sections)
+        synchronizeHabitToggles();
+
+    } catch (err) {
+        console.error("Erreur chargement habitudes:", err);
+    }
+}
+
 async function saveProfile() {
-    const formData = new FormData(document.getElementById('profile-form'));
+    const form = document.getElementById('profile-form');
+    const formData = new FormData(form);
+    
+    // Ajout de l'avatar s'il y en a un
     const fileInput = document.getElementById('profile-input-file');
     if (fileInput.files[0]) {
         formData.append('avatar', fileInput.files[0]);
     }
 
+    // Ajout manuel des checkboxes (car si non cochées, elles ne sont pas dans le FormData)
+    formData.append('jardin', document.getElementById('habits-jardin').checked ? '1' : '0');
+    formData.append('arrosage_auto', document.getElementById('habits-arrosage').checked ? '1' : '0');
+    formData.append('lave_vaisselle', document.getElementById('habits-lave-vaisselle').checked ? '1' : '0');
+    
+    // Ajout des valeurs spécifiques
+    formData.append('douche_bain', document.querySelector('input[name="hygiene"]:checked').value);
+    formData.append('duree_douche', document.getElementById('habits-duree-douche').value);
+    formData.append('lave_vaisselle_freq', document.getElementById('habits-lv-freq').value);
+    formData.append('motivation', document.getElementById('habits-motivation').value);
+    formData.append('logement', document.getElementById('habits-logement').value);
+    formData.append('piscine', document.getElementById('habits-piscine').value);
+    formData.append('eau_boisson', document.getElementById('habits-eau').value);
+
+
     try {
-        const res = await fetch(`${API_BASE_URL}update_profile.php`, { method: 'POST', body: formData });
-        const result = await res.json();
+        // 1. Sauvegarde du profil (Nom, Prénom, Avatar)
+        const resProfile = await fetch(`${API_BASE_URL}update_profile.php`, { method: 'POST', body: formData });
+        const resultProfile = await resProfile.json();
+
+        // 2. Sauvegarde des habitudes
+        // On peut réutiliser le même FormData, PHP ignorera les champs en trop
+        const resHabits = await fetch(`${API_BASE_URL}save_habits.php`, { method: 'POST', body: formData });
+        const resultHabits = await resHabits.json();
         
-        if (result.success) {
-            showNotification("Profil mis à jour !"); 
+        if (resultProfile.success && resultHabits.success) {
+            showNotification("Profil et habitudes mis à jour !"); 
             await loadProfile();
             await refreshUserList();
         } else {
-            showNotification("Erreur: " + result.error, true); 
+            const error = resultProfile.error || resultHabits.error || "Erreur inconnue";
+            showNotification("Erreur: " + error, true); 
         }
     } catch (err) {
+        console.error(err);
         showNotification("Erreur technique de connexion.", true); 
     }
 }
@@ -966,6 +1156,72 @@ function setupProfileInteractions() {
             reader.readAsDataURL(file);
         }
     });
+}
+
+// --- FONCTIONS D'INTERFACE (ACCORDÉON & TOGGLES) ---
+
+function toggleAccordion(header) {
+    const content = header.nextElementSibling;
+    const arrow = header.querySelector('.arrow');
+    
+    content.classList.toggle('hidden');
+    arrow.textContent = content.classList.contains('hidden') ? '▼' : '▲';
+}
+
+function toggleHousingOptions() {
+    const type = document.getElementById('habits-logement').value;
+    const subMaison = document.getElementById('sub-maison');
+    
+    if (type === 'Maison') {
+        subMaison.classList.remove('hidden');
+    } else {
+        subMaison.classList.add('hidden');
+        // Reset des sous-options si on repasse en appartement
+        document.getElementById('habits-jardin').checked = false;
+        toggleGardenOptions();
+    }
+}
+
+function toggleGardenOptions() {
+    const hasGarden = document.getElementById('habits-jardin').checked;
+    const subJardin = document.getElementById('sub-jardin');
+    
+    if (hasGarden) {
+        subJardin.classList.remove('hidden');
+    } else {
+        subJardin.classList.add('hidden');
+    }
+}
+
+function toggleShowerOptions() {
+    const hygiene = document.querySelector('input[name="hygiene"]:checked').value;
+    const subDouche = document.getElementById('sub-douche');
+    
+    if (hygiene === 'Douche') {
+        subDouche.classList.remove('hidden'); // On affiche le slider
+        subDouche.style.display = 'block'; // Force display block si la classe hidden ne suffit pas (dépend du CSS)
+    } else {
+        subDouche.classList.add('hidden');
+        subDouche.style.display = 'none';
+    }
+}
+
+function toggleDishwasher() {
+    const hasDishwasher = document.getElementById('habits-lave-vaisselle').checked;
+    const subDishwasher = document.getElementById('sub-lave-vaisselle');
+    
+    if (hasDishwasher) {
+        subDishwasher.classList.remove('hidden');
+    } else {
+        subDishwasher.classList.add('hidden');
+    }
+}
+
+function synchronizeHabitToggles() {
+    toggleHousingOptions();
+    toggleGardenOptions();
+    toggleShowerOptions();
+    toggleDishwasher();
 }
 
 // Affiche la liste des utilisateurs dans la vue profil
@@ -1007,23 +1263,46 @@ async function refreshUserList() {
 
 // Ajoute un nouvel utilisateur
 async function addUser() {
-    const newPrenom = prompt("Entrez le PRÉNOM du nouveau membre :");
-    if (!newPrenom || newPrenom.trim() === '') {
+    const newPrenom = await showModal(
+        "Nouveau membre",
+        "Entrez le PRÉNOM du nouveau membre :",
+        { showInput: true, inputPlaceholder: "Prénom" }
+    );
+
+    if (newPrenom === null) return; // Annulé
+    if (newPrenom.trim() === '') {
         showNotification("Ajout annulé. Le prénom est obligatoire.", true);
         return;
     }
 
-    const newAge = prompt(`Quel est l'âge de ${newPrenom} ? (Optionnel)`);
-    let newGenreInput = prompt(`Genre de ${newPrenom} ?\nEntrez 'H' pour Homme, 'F' pour Femme, ou laissez vide.`);
+    const newAge = await showModal(
+        "Âge",
+        `Quel est l'âge de ${newPrenom} ? (Optionnel)`,
+        { showInput: true, inputPlaceholder: "Âge", inputType: "number" }
+    );
+    if (newAge === null) return; // Annulé
+
+    let newGenreInput = await showModal(
+        "Genre",
+        `Genre de ${newPrenom} ?\n(H = Homme, F = Femme, ou laisser vide)`,
+        { showInput: true, inputPlaceholder: "H / F" }
+    );
+    if (newGenreInput === null) return; // Annulé
+
     let newGenre = 'Non précisé';
     if (newGenreInput) {
         const inputUpper = newGenreInput.trim().toUpperCase();
-        if (inputUpper === 'H') newGenre = 'Homme';
-        else if (inputUpper === 'F') newGenre = 'Femme';
+        if (inputUpper === 'H' || inputUpper === 'HOMME') newGenre = 'Homme';
+        else if (inputUpper === 'F' || inputUpper === 'FEMME') newGenre = 'Femme';
     }
 
     // Étape 4 : Sportif (Optionnel)
-    const isSportif = confirm(`Est-ce que ${newPrenom} est sportif/sportive ?`);
+    // Ici "Annuler" sert de réponse "Non"
+    const isSportif = await showModal(
+        "Sportif ?",
+        `Est-ce que ${newPrenom} est sportif/sportive ?`,
+        { confirmText: "Oui", cancelText: "Non" }
+    );
     
     const formData = new FormData();
     formData.append('prenom', newPrenom);
@@ -1048,7 +1327,12 @@ async function addUser() {
 
 // Supprime un utilisateur
 async function deleteUser(userId) {
-    if (!confirm("Êtes-vous sûr de vouloir supprimer ce membre ?")) return;
+    const confirmDelete = await showModal(
+        "Supprimer le membre",
+        "Êtes-vous sûr de vouloir supprimer ce membre ?",
+        { confirmText: "Supprimer", cancelText: "Annuler" }
+    );
+    if (!confirmDelete) return;
     
     const res = await fetch(`${API_BASE_URL}delete_user.php?id=${userId}`);
     const result = await res.json();
@@ -1281,7 +1565,7 @@ function getHomeChartOptions() {
         interaction: { mode: 'index', intersect: false }, // Important pour le tooltip
 
         // AJOUT DE LA GESTION DU CLIC
-        onClick: (event, elements) => {
+        onClick: async (event, elements) => {
             // On ne veut activer la modale que pour la vue "Jour" (qui est un graphique en barres)
             if (homeRange !== 'day' || elements.length === 0) {
                 return;
@@ -1299,39 +1583,90 @@ function getHomeChartOptions() {
             if (liters > 0) {
                 // On ne peut qualifier que si un capteur spécifique est sélectionné
                 if (selectedMac === 'ALL') {
-                    return; // On ne fait rien si "Tous les capteurs" est sélectionné
+                    // On pourrait afficher une notification, mais pour l'instant on ne fait rien.
+                    return;
                 }
 
-                // NOUVELLE LOGIQUE CORRIGÉE
-                const sensorName = sensorConfig[selectedMac]?.name; // ex: "Douche"
+                const sensorName = sensorConfig[selectedMac]?.name;
 
-                // On cherche un objectif pertinent SEULEMENT si le nom du capteur est défini
-                if (sensorName) {
-                    const relevantObjective = userObjectives.find(obj => obj.nom_objectif.includes(sensorName));
+                // On ne cherche un objectif que si le nom du capteur est bien défini
+                if (!sensorName) {
+                    // Si pas de nom de capteur, on ouvre la modale classique
+                    openActivityModal(date, time, liters.toFixed(2), selectedMac);
+                    return;
+                }
 
-                    if (relevantObjective) {
-                        // SCÉNARIO 1 : Un objectif est trouvé, on demande confirmation
-                        const confirmation = confirm(
-                            `Vous avez un objectif de ${relevantObjective.valeur_cible} ${relevantObjective.unite} pour votre prochaine "${sensorName}".\n\n` +
-                            `Cette consommation de ${liters.toFixed(1)} L correspond-elle à cet objectif ?\n\n` +
-                            `- Cliquez sur "OK" si c'est le cas.\n` +
-                            `- Cliquez sur "Annuler" si c'est une autre consommation (pour la qualifier différemment).`
-                        );
+                // On cherche un objectif pertinent (actif) qui correspond au nom du capteur
+                // Mapping des noms de capteurs vers les mots-clés des objectifs
+                const sensorToObjectiveKeyword = {
+                    'Douche': 'Douche',
+                    'Cuisine': 'Vaisselle',
+                    'Robinet Ext.': 'Arrosage'
+                };
+                const keyword = sensorToObjectiveKeyword[sensorName] || sensorName;
 
-                        if (confirmation) {
-                            // L'utilisateur a dit OUI : on valide l'objectif et on s'arrête là.
-                            const isSuccess = liters <= relevantObjective.valeur_cible;
-                            showNotification(
-                                isSuccess ? `✅ Objectif atteint ! (${liters.toFixed(1)} L / ${relevantObjective.valeur_cible} L)` : `❌ Objectif manqué. (${liters.toFixed(1)} L / ${relevantObjective.valeur_cible} L). Mieux la prochaine fois !`,
-                                !isSuccess
-                            );
-                            return; // <-- CORRECTION CRUCIALE : On arrête le script ici.
+                const relevantObjective = userObjectives.find(obj => 
+                    obj.nom_objectif.includes(keyword) && obj.statut === 'En cours'
+                );
+
+                if (relevantObjective) {
+                    // SCÉNARIO 1 : Un objectif est trouvé, on demande confirmation à l'utilisateur
+                    const confirmation = await showModal(
+                        "Validation d'objectif",
+                        `Vous avez un objectif de <b>${relevantObjective.valeur_cible} ${relevantObjective.unite}</b> pour votre prochaine "${sensorName}".\n\n` +
+                        `Cette consommation de <b>${liters.toFixed(1)} L</b> correspond-elle à cet objectif ?`,
+                        { confirmText: "Oui, valider", cancelText: "Non, autre" }
+                    );
+
+                    if (confirmation) {
+                        // L'utilisateur a dit OUI : on valide l'objectif et on arrête le processus ici.
+                        const isSuccess = liters <= parseFloat(relevantObjective.valeur_cible);
+                        
+                        // On affiche une notification immédiate pour le feedback utilisateur
+                        const message = isSuccess 
+                            ? `✅ Objectif atteint ! (${liters.toFixed(1)} L / ${relevantObjective.valeur_cible} L)` 
+                            : `❌ Objectif manqué. (${liters.toFixed(1)} L / ${relevantObjective.valeur_cible} L).`;
+                        
+                        showNotification(message, !isSuccess);
+
+                        // On envoie la validation au serveur
+                        validateObjective(relevantObjective.id, liters.toFixed(2));
+                        
+                        // NOUVEAU : Si l'objectif est manqué, on propose de le reconduire ou de le modifier
+                        if (!isSuccess) {
+                            setTimeout(async () => {
+                                const modify = await showModal(
+                                    "Objectif manqué !",
+                                    `Voulez-vous modifier l'objectif pour le rendre plus atteignable la prochaine fois ?`,
+                                    { confirmText: "Modifier", cancelText: "Garder le même" }
+                                );
+
+                                let newTarget = relevantObjective.valeur_cible;
+                                if (modify) {
+                                    const input = await showModal(
+                                        "Nouvel objectif",
+                                        "Entrez la nouvelle cible (en Litres) :",
+                                        { showInput: true, inputValue: Math.ceil(liters), inputType: 'number' }
+                                    );
+                                    if (input && !isNaN(parseFloat(input))) {
+                                        newTarget = parseFloat(input);
+                                    }
+                                }
+                                
+                                // On recrée l'objectif pour la prochaine fois
+                                addObjective(relevantObjective.nom_objectif, newTarget);
+
+                            }, 500); // Petit délai pour laisser l'UI se mettre à jour
                         }
-                        // Si l'utilisateur clique sur "Annuler", le script continue et ouvrira la modale ci-dessous.
+
+                        // On arrête le script ici pour ne pas ouvrir la modale de qualification
+                        return; 
                     }
+                    // Si l'utilisateur clique sur "Annuler", le script continue et ouvrira la modale classique ci-dessous.
                 }
 
-                // SCÉNARIO 2 : Pas d'objectif trouvé OU l'utilisateur a cliqué "Annuler". On ouvre la modale classique.
+                // SCÉNARIO 2 : Pas d'objectif pertinent trouvé OU l'utilisateur a cliqué "Annuler" à l'étape précédente.
+                // On ouvre la modale de qualification classique.
                 openActivityModal(date, time, liters.toFixed(2), selectedMac);
             }
         },

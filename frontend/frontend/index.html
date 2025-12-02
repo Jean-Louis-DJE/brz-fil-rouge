@@ -6,7 +6,7 @@
   <title>BREIZH4LINE</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#ffffff" />
-  <link rel="stylesheet" href="style.css?v=7" />
+  <link rel="stylesheet" href="style.css?v=8" />
 </head>
 <body>
 
@@ -32,7 +32,6 @@
       <img src="assets/logo-small.png" alt="BREIZH4LINE" class="logo-mini" />
       <span class="badge">9</span>
       <div class="spacer"></div>
-      <button class="icon-btn" aria-label="Favoris">★</button>
     </header>
 
     <main class="content">
@@ -175,43 +174,114 @@
           <label for="input-nom">Nom</label>
           <input type="text" id="input-nom" name="nom" placeholder="Votre nom">
         </div>
-  
         <div class="form-group">
-          <label for="input-habitudes">Mes habitudes de consommation</label>
-          <textarea id="input-habitudes" rows="5" placeholder="Ex: Je prends 2 douches par jour, j'ai un lave-vaisselle..."></textarea>
-          <small>Ces infos nous aident à mieux analyser votre consommation.</small>
-        </div>
-
-        <div class="form-group">
-          <label class="checkbox-label">
-            <input type="checkbox" id="input-sportif">
-            <span>Je suis sportif/sportive</span>
-          </label>
-        </div>
-
-        <div class="form-group">
-          <label for="input-departement">Département (Code)</label>
-          <input type="text" id="input-departement" placeholder="Ex: 29, 35, 56...">
-        </div>
-
-      </form>
-
-      <!-- ================================================== -->
-      <!-- == SECTION MEMBRES DU FOYER (AJOUT) == -->
-      <!-- ================================================== -->
-      <div class="card user-list-container">
-          <div class="user-list-header">
-              <h3>
-                  Membres du foyer (<span id="user-count">0</span>)
-              </h3>
-              <button onclick="addUser()" class="btn-primary" style="border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
-                  + Ajouter
-              </button>
-          </div>
-          <ul id="user-list" style="margin: 0; padding: 0;">
-              <!-- La liste des utilisateurs sera insérée ici par JavaScript -->
-          </ul>
+          <label for="input-age">Âge</label>
+          <input type="number" id="input-age" placeholder="Votre âge" min="1" max="120">
       </div>
+      <div class="form-group">
+          <label for="input-genre">Genre</label>
+          <select id="input-genre">
+              <option value="">Sélectionner</option>
+              <option value="Homme">Homme (H)</option>
+              <option value="Femme">Femme (F)</option>
+              <option value="Non précisé">Ne se prononce pas</option>
+          </select>
+      </div>
+      <div class="card" id="user-list-card">
+          <div class="card-title">
+              Membres du Foyer (<span id="user-count">...</span>)
+              <button class="chip" onclick="addUser()">+ Ajouter</button>
+          </div>
+          <ul id="user-list" style="list-style: none; padding: 0;">
+              </ul>
+      </div>
+      
+      <div class="separator accordion-header" onclick="toggleAccordion(this)">
+        🎯 Objectifs <span class="arrow">▼</span>
+      </div>
+      <div class="section-content">
+          <div class="form-group">
+              <label for="habits-motivation">Pourquoi Breizh4Line ?</label>
+              <select id="habits-motivation">
+                  <option value="Economie">💰 Économiser de l'argent</option>
+                  <option value="Ecologie">🌱 Intérêt environnemental</option>
+                  <option value="Curiosite">🤔 Simple curiosité</option>
+                  <option value="Fuites">💧 Détecter des fuites</option>
+              </select>
+          </div>
+      </div>
+      
+      <div class="separator accordion-header" onclick="toggleAccordion(this)">
+          🏠 Logement <span class="arrow">▼</span>
+      </div>
+      <div class="section-content hidden"> <div class="form-group">
+              <label for="habits-logement">Type de logement</label>
+              <select id="habits-logement" onchange="toggleHousingOptions()">
+                  <option value="Appartement">Appartement</option>
+                  <option value="Maison">Maison</option>
+              </select>
+          </div>
+          
+          <div id="sub-maison" class="sub-group hidden">
+              <div class="checkbox-row">
+                  <input type="checkbox" id="habits-jardin" onchange="toggleGardenOptions()">
+                  <label for="habits-jardin">J'ai un jardin</label>
+              </div>
+  
+              <div id="sub-jardin" class="sub-group hidden">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="habits-arrosage">
+                    <label for="habits-arrosage">Arrosage Automatique</label>
+                </div>
+                <div class="form-group">
+                  <label for="habits-piscine">Piscine</label>
+                  <select id="habits-piscine">
+                      <option value="Non">Non</option>
+                      <option value="Hors-sol">Hors-sol</option>
+                      <option value="Enterree">Enterrée</option>
+                  </select>
+                </div>
+              </div>
+          </div>
+      </div>
+      
+      <div class="separator accordion-header" onclick="toggleAccordion(this)">
+          🚰 Habitudes <span class="arrow">▼</span>
+      </div>
+      <div class="section-content hidden"> 
+        <div class="form-group">
+              <label for="habits-eau">Boisson</label>
+              <select id="habits-eau">
+                  <option value="Robinet">Eau du robinet</option>
+                  <option value="Bouteille">Eau en bouteille</option>
+              </select>
+          </div>
+      
+      <div class="form-group">
+          <label>Hygiène principale</label>
+          <div class="radio-group">
+              <label><input type="radio" name="hygiene" value="Douche" checked onchange="toggleShowerOptions()"> Douche</label>
+              <label><input type="radio" name="hygiene" value="Bain" onchange="toggleShowerOptions()"> Bain</label>
+          </div>
+      </div>
+      
+      <div id="sub-douche" class="sub-group">
+          <label for="habits-duree-douche">Temps moyen sous la douche (min)</label>
+          <input type="range" id="habits-duree-douche" min="1" max="30" value="5" oninput="this.nextElementSibling.value = this.value + ' min'">
+          <output>5 min</output>
+      </div>
+      
+      <div class="checkbox-row" style="margin-top:15px;">
+          <input type="checkbox" id="habits-lave-vaisselle" onchange="toggleDishwasher()">
+          <label for="habits-lave-vaisselle">J'ai un lave-vaisselle</label>
+      </div>
+      
+      <div id="sub-lave-vaisselle" class="sub-group hidden">
+          <label for="habits-lv-freq">Utilisation par semaine</label>
+          <input type="number" id="habits-lv-freq" placeholder="Ex: 4 fois" min="1" max="20">
+      </div>
+      </div>
+      </form>
     </main>
   </section>
 
@@ -434,8 +504,21 @@
     </form>
   </div>
 
+  <!-- ========================================== -->
+  <!-- == MODALE D'INTERACTION GÉNÉRIQUE == -->
+  <!-- ========================================== -->
+  <div id="interaction-modal" class="custom-modal">
+    <h3 id="modal-title">Titre</h3>
+    <p id="modal-message">Message...</p>
+    <input type="text" id="modal-input" style="display: none;">
+    <div class="modal-actions">
+      <button id="modal-btn-cancel" class="btn btn-secondary">Annuler</button>
+      <button id="modal-btn-confirm" class="btn btn-primary">OK</button>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=14"></script>
 </body>
 </html>

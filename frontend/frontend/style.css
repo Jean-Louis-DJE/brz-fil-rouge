@@ -532,9 +532,91 @@ canvas { display: block; width: 100%; }
   opacity: 1;
 }
 
-/* ======================================= */
-/* == SECTION MEMBRES DU FOYER (PROFIL) == */
-/* ======================================= */
+/* Styles pour le formulaire avancé */
+.hidden {
+  display: none !important;
+}
+
+.sub-group {
+  background: #f1f5f9;
+  padding: 10px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  border-left: 3px solid var(--primary);
+  margin-left: 10px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.checkbox-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+}
+
+.separator {
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--primary);
+  margin: 20px 0 10px 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 5px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 20px;
+}
+
+/* --- ACCORDÉON --- */
+
+/* Le titre cliquable */
+.accordion-header {
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between; /* Titre à gauche, flèche à droite */
+  align-items: center;
+  transition: background 0.2s;
+  padding: 10px 5px;
+  border-radius: 8px;
+}
+
+.accordion-header:hover {
+  background-color: #eef2ff; /* Petit effet au survol */
+}
+
+/* La flèche animée */
+.arrow {
+  font-size: 12px;
+  transition: transform 0.3s ease;
+}
+
+/* Quand la section est fermée (on ajoute une classe .collapsed via JS) */
+.accordion-header.collapsed .arrow {
+  transform: rotate(-90deg); /* La flèche pointe vers la gauche */
+}
+
+.accordion-header.collapsed {
+  color: var(--muted); /* Le titre se grise un peu quand c'est fermé */
+  border-bottom: none; /* On enlève la ligne du separator */
+}
+
+/* Le contenu */
+.section-content {
+  overflow: hidden;
+  transition: max-height 0.3s ease-out; /* Animation fluide */
+  padding-bottom: 10px;
+}
+
+/* Pour cacher le contenu */
+.section-content.hidden {
+  display: none;
+}
 
 .user-list-container {
   margin-top: 30px;
@@ -759,6 +841,13 @@ canvas { display: block; width: 100%; }
   flex-grow: 1;
 }
 #objectives-list .objective-name { font-weight: 600; }
+#objectives-list li.validated .objective-name {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+#objectives-list li.validated .objective-value {
+  font-weight: 400; /* Moins gras une fois validé */
+}
 #objectives-list .objective-value { font-weight: 700; font-size: 15px; color: var(--primary); margin-top: 2px; }
 #objectives-list .objective-status { font-size: 12px; color: var(--muted); }
 
@@ -907,4 +996,89 @@ canvas { display: block; width: 100%; }
 
 .add-sensor-form button:hover {
     background-color: #0a58d1; /* Un peu plus foncé au survol */
+}
+
+/* ======================================= */
+/* == MODALE GÉNÉRIQUE (CUSTOM)         == */
+/* ======================================= */
+
+.custom-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.95);
+  width: 90%;
+  max-width: 360px;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+  z-index: 200; /* Au-dessus de tout */
+  padding: 24px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  display: none;
+}
+
+.custom-modal.show {
+  display: block;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.custom-modal h3 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  font-size: 18px;
+  color: var(--text);
+}
+
+.custom-modal p {
+  margin-bottom: 20px;
+  color: #334155;
+  line-height: 1.5;
+}
+
+.custom-modal input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  background-color: #f8fafc;
+}
+
+.custom-modal .modal-actions {
+  margin-top: 0;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+.btn-primary:hover {
+  background-color: #0a58d1;
+}
+
+.btn-secondary {
+  background-color: #e2e8f0;
+  color: var(--text);
+}
+.btn-secondary:hover {
+  background-color: #cbd5e1;
 }
