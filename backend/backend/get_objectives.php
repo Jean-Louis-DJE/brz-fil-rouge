@@ -16,8 +16,8 @@ function handle_get_objectives() {
     $id_utilisateur = $user['id'];
 
     try {
-        // On récupère les objectifs "En cours" pour l'utilisateur
-        $stmt = $pdo->prepare("SELECT id, nom_objectif, valeur_cible, unite FROM objectifs WHERE id_utilisateur = ? AND statut = 'En cours' ORDER BY date_creation DESC");
+        // On récupère les objectifs "En cours" et "validé" pour l'utilisateur
+        $stmt = $pdo->prepare("SELECT id, nom_objectif, valeur_cible, unite, statut, valeur_reelle FROM objectifs WHERE id_utilisateur = ? AND statut IN ('En cours', 'validé') ORDER BY date_creation DESC");
         $stmt->execute([$id_utilisateur]);
         $objectives = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

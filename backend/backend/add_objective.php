@@ -31,8 +31,9 @@ function handle_add_objective() {
     $unite = $data['unit'];
 
     try {
+        // Le statut par défaut est 'En cours'
         $stmt = $pdo->prepare(
-            "INSERT INTO objectifs (id_utilisateur, nom_objectif, valeur_cible, unite) VALUES (?, ?, ?, ?)"
+            "INSERT INTO objectifs (id_utilisateur, nom_objectif, valeur_cible, unite, statut) VALUES (?, ?, ?, ?, 'En cours')"
         );
         $stmt->execute([$id_utilisateur, $nom_objectif, $valeur_cible, $unite]);
 
