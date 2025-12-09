@@ -1,4 +1,6 @@
 <?php
+// backend/backend/get_all_known_sensors.php
+// Ce fichier récupère toutes les adresses MAC connues des capteurs
 header("Content-Type: application/json");
 include "config.php";
 

@@ -1,5 +1,6 @@
 <?php
-// c:/xampp/htdocs/brz/backend/update_sensor_config.php
+// backend/backend/update_sensor_config.php
+// Ce fichier met à jour la configuration des capteurs dans la base de données
 require 'config.php';
 header('Content-Type: application/json');
 

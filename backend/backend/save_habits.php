@@ -1,4 +1,7 @@
 <?php
+// backend/backend/save_habits.php
+// Ce fichier enregistre les habitudes de l'utilisateur dans la base de données
+// Il attend une requête POST avec les données nécessaires
 header("Content-Type: application/json");
 include "config.php";
 

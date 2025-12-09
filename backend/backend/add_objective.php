@@ -1,4 +1,6 @@
 <?php
+// backend/backend/add_objective.php
+// Ce fichier gère l'ajout d'un objectif dans la base de données
 include 'config.php';
 
 function handle_add_objective() {

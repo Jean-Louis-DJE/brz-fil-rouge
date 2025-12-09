@@ -1,4 +1,6 @@
 <?php
+// backend/backend/get_habits.php
+// Ce fichier récupère les habitudes de l'utilisateur
 header("Content-Type: application/json");
 include "config.php";
 

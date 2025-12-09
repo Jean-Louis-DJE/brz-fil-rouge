@@ -1,4 +1,6 @@
 <?php
+// backend/backend/get_summary.php
+// Ce fichier récupère un résumé des données de consommation d'eau
 header("Content-Type: application/json");
 include "config.php";
 

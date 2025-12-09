@@ -1,8 +1,11 @@
 <?php
 // backend/get_aggregated_data.php
+// Ce fichier récupère les données agrégées des capteurs sur une période donnée
 header("Content-Type: application/json");
 include "config.php";
 
+// Récupérer les paramètres de la requête
+// Date de début et de fin, adresse MAC du capteur, type de regroupement
 $date_debut = $_GET['start'] ?? date('Y-m-d', strtotime('-30 days')) . ' 00:00:00';
 $date_fin = $_GET['end'] ?? date('Y-m-d') . ' 23:59:59';
 $mac = $_GET['mac'] ?? 'ALL';
@@ -41,10 +44,12 @@ $sql = "
 ";
 
 try {
+
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Formater les résultats pour la réponse JSON
     $resultat = [];
     foreach ($data as $row) {
         $resultat[] = [

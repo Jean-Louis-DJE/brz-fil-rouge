@@ -1,3 +1,6 @@
+// frontend/frontend/app.js
+// Ce fichier gère la navigation, les interactions utilisateur et les graphiques de l'application.
+
 // ==========================================
 // 1. NAVIGATION ET INTERFACE
 // ==========================================
@@ -8,10 +11,10 @@ const viewQuote = document.getElementById('view-quote');
 const viewHome = document.getElementById('view-home');
 const viewCosts = document.getElementById('view-costs'); 
 const viewProfile = document.getElementById('view-profile');
-const viewSettings = document.getElementById('view-settings'); // NOUVEAU
+const viewSettings = document.getElementById('view-settings'); 
 const viewAlerts = document.getElementById('view-alerts');
 
-// Fonction de navigation avec RE-ANIMATION FORCÉE
+// Fonction de navigation 
 const goto = (el) => {
     // 1. Changer la vue visible
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
@@ -78,8 +81,13 @@ const goto = (el) => {
     }
 };
 
+// Séquence de navigation au lancement
 setTimeout(() => goto(viewQuote), 1500);
 setTimeout(() => goto(viewHome), 3000);
+
+// ==========================================
+// MENU LATÉRAL
+// ==========================================
 
 const sideMenu = document.getElementById('side-menu');
 const overlay = document.getElementById('overlay');
@@ -131,17 +139,17 @@ const goalInput = document.getElementById('goal-input-liters');
 const goalInputGroup = document.getElementById('goal-input-group'); // Vaisselle
 const dishwashingTipsContainer = document.getElementById('dishwashing-tips-container');
 
-// NOUVEAU: Récupération des éléments pour la douche et l'arrosage
+// Récupération des éléments pour la douche et l'arrosage
 const showerInfoContainer = document.getElementById('shower-info-container');
 const showerGoalInput = document.getElementById('shower-goal-input');
 const showerTipsContainer = document.getElementById('shower-tips-container');
 const wateringInfoContainer = document.getElementById('watering-info-container');
 const wateringGoalInput = document.getElementById('watering-goal-input');
 const wateringTipsContainer = document.getElementById('watering-tips-container');
-// NOUVEAU: Stockage simple des objectifs
+// Stockage simple des objectifs
 let userObjectives = []; 
 
-// NOUVEAU: Variables pour stocker les données chargées depuis la BDD
+// Variables pour stocker les données chargées depuis la BDD
 let activityData = {
     activities: {},
     content: {}
@@ -227,6 +235,7 @@ function showModal(title, message, options = {}) {
     });
 }
 
+// Fonction pour fermer la modale d'interaction
 function closeInteractionModal() {
     const modal = document.getElementById('interaction-modal');
     modal.classList.remove('show');
@@ -265,7 +274,7 @@ function saveActivity() {
         goalInputGroupToHide = goalInput.closest('.form-group');
 
     } else if (activity === 'douche_courte' || activity === 'douche_longue') {
-        goalValue = parseFloat(showerGoalInput.value); // La valeur est maintenant en Litres
+        goalValue = parseFloat(showerGoalInput.value); 
         goalName = `Prochaine Douche`;
         tipsContainer = showerTipsContainer;
         goalInputGroupToHide = showerGoalInput.closest('.form-group');
@@ -281,8 +290,7 @@ function saveActivity() {
     if (goalValue > 0 && tipsContainer) {
         const objectiveData = {
             name: goalName,
-            target: goalValue,
-            unit: 'L' // Tous les objectifs sont maintenant en Litres
+            target: goalValue
         };
 
         // On envoie l'objectif au serveur
@@ -333,7 +341,7 @@ function saveActivity() {
     closeActivityModal();
 }
 
-// NOUVEAU: Fonction pour afficher les objectifs dans l'onglet "Alertes"
+// Fonction pour afficher les objectifs dans l'onglet "Alertes"
 function renderObjectives() {
     const listEl = document.getElementById('objectives-list');
     const cardEl = document.getElementById('objectives-container-card');
@@ -372,7 +380,7 @@ function renderObjectives() {
         }).join('');
 }
 
-// NOUVEAU: Fonction pour supprimer un objectif
+// Fonction pour supprimer un objectif
 async function deleteObjective(objectiveId) {
     const confirmDelete = await showModal(
         "Supprimer l'objectif",
@@ -396,7 +404,7 @@ async function deleteObjective(objectiveId) {
     }
 }
 
-// NOUVEAU: Fonction pour marquer un objectif comme validé
+// Fonction pour marquer un objectif comme validé
 async function validateObjective(objectiveId, finalValue) {
     try {
         const response = await fetch(`${API_BASE_URL}update_objective_status.php`, {
@@ -414,7 +422,7 @@ async function validateObjective(objectiveId, finalValue) {
     }
 }
 
-// NOUVEAU: Fonction utilitaire pour ajouter un objectif (réutilisée)
+// Fonction utilitaire pour ajouter un objectif (réutilisée)
 async function addObjective(name, target) {
     try {
         const response = await fetch(`${API_BASE_URL}add_objective.php`, {
@@ -438,7 +446,7 @@ async function addObjective(name, target) {
     }
 }
 
-// NOUVEAU: Fonction pour charger les objectifs depuis la BDD
+// Fonction pour charger les objectifs depuis la BDD
 async function loadObjectives() {
     try {
         const response = await fetch(`${API_BASE_URL}get_objectives.php`);
@@ -472,7 +480,7 @@ activitySelect.addEventListener('change', () => {
     // Pour les autres cas (lave-linge, etc.), rien ne s'affiche, ce qui est le comportement souhaité.
 });
 
-// NOUVEAU: Fonction pour charger les données des activités depuis le serveur
+// Fonction pour charger les données des activités depuis le serveur
 async function loadActivityData() {
     try {
         const response = await fetch(`${API_BASE_URL}get_activity_data.php`);
@@ -492,6 +500,7 @@ async function loadActivityData() {
 // 2. GESTION DES DATES (KPI ACCUEIL)
 // ==========================================
 
+// Éléments de la sélection de date
 const chipStart = document.getElementById('chip-start');
 const chipEnd = document.getElementById('chip-end');
 const inputStart = document.getElementById('dateStart');
@@ -538,12 +547,12 @@ let usageCostChart;     // Camembert (Coûts)
 let homeRange = 'day'; 
 let costsRange = 'month'; 
 let selectedMac = 'ALL'; 
-let homeViewDate = new Date(); // NOUVEAU: Date curseur pour le graphique d'accueil
-let sensorConfig = {}; // NOUVEAU: Remplacera macNames et macColors
+let homeViewDate = new Date(); // Date curseur pour le graphique d'accueil
+let sensorConfig = {}; // Remplacera macNames et macColors
 
 // Date curseur pour la navigation historique (Onglet Coûts)
 let currentViewDate = new Date(); 
-let recoViewDate = new Date(); // NOUVEAU: Date curseur pour les recommandations
+let recoViewDate = new Date(); // Date curseur pour les recommandations
 
 const simulatedMacs = ['00:1A:2B:3C:4D:01', '00:1A:2B:3C:4D:02', '00:1A:2B:3C:4D:03', '00:1A:2B:3C:4D:04']; // Conservé pour la simulation de données si utilisée
 // const macNames = { '00:1A:2B:3C:4D:01': 'Douche', '00:1A:2B:3C:4D:02': 'Lave-linge', '00:1A:2B:3C:4D:03': 'Cuisine', '00:1A:2B:3C:4D:04': 'Robinet Ext.' };
@@ -554,6 +563,7 @@ const simulatedMacs = ['00:1A:2B:3C:4D:01', '00:1A:2B:3C:4D:02', '00:1A:2B:3C:4D
 // 4. FONCTIONS UTILITAIRES
 // ==========================================
 
+// Convertit une date en chaîne ISO locale (YYYY-MM-DD)
 function toLocalISOString(date) {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -561,6 +571,7 @@ function toLocalISOString(date) {
     return `${y}-${m}-${d}`;
 }
 
+// Calcule la plage de dates (start, end) en fonction de la sélection
 function calculateDateRange(range, referenceDate = new Date()) {
     const ref = new Date(referenceDate); 
     let startDate, endDate;
@@ -604,6 +615,7 @@ function calculateDateRange(range, referenceDate = new Date()) {
 // 5. LOGIQUE DES GRAPHIQUES
 // ==========================================
 
+// Fonction pour récupérer les données agrégées depuis l'API
 async function fetchData(start, end, grouping) { 
     let url;
     let macFilter = selectedMac !== 'ALL' ? `&mac=${selectedMac}` : ''; 
@@ -637,6 +649,7 @@ async function fetchData(start, end, grouping) {
     }
 }
 
+// --- MISE À JOUR DU DASHBOARD KPI ---
 async function updateDashboard() {
     if (!inputStart.value || !inputEnd.value) return; 
     const dateStart = inputStart.value + " 00:00:00";
@@ -650,6 +663,7 @@ async function updateDashboard() {
     } catch (err) { console.error("Erreur KPI", err); }
 }
 
+// --- GRAPHIQUE D'ACCUEIL (AVEC GESTION DU TYPE DE GRAPHIQUE) ---
 async function updateHomeChart() {
     const { start, end } = calculateDateRange(homeRange, homeViewDate); // Utilise homeViewDate au lieu de new Date()
     try {
@@ -758,11 +772,13 @@ async function drawVolumePie() {
     await drawPie('volumeBreakdownChart', start, end, true);
 }
 
+// --- Camembert Coûts ---
 async function drawCostPie() {
     const { start, end } = calculateDateRange(costsRange, currentViewDate); 
     await drawPie('usageChart', start, end, false);
 }
 
+// Fonction générique pour dessiner un camembert
 async function drawPie(canvasId, start, end, isVolume) {
     try {
         const res = await fetch(`${API_BASE_URL}get_breakdown.php?start=${start}&end=${end}`);
@@ -829,6 +845,7 @@ async function drawPie(canvasId, start, end, isVolume) {
 // 6. LISTENERS & INITIALISATION
 // ==========================================
 
+// Écouteurs pour les sélecteurs de plage de dates
 function setupRangeListeners() {
 
     // 1. Accueil
@@ -931,7 +948,7 @@ function setupRangeListeners() {
             }
             updateHomePeriodDisplay();
             updateHomeChart();
-            drawVolumePie(); // NOUVEAU: Mettre à jour le camembert aussi
+            drawVolumePie(); 
         });
 
         prevDayHomeBtn.addEventListener('click', () => {
@@ -944,7 +961,7 @@ function setupRangeListeners() {
             }
             updateHomePeriodDisplay();
             updateHomeChart();
-            drawVolumePie(); // NOUVEAU: Mettre à jour le camembert aussi
+            drawVolumePie(); 
         });
 
         nextDayHomeBtn.addEventListener('click', () => {
@@ -957,7 +974,7 @@ function setupRangeListeners() {
             }
             updateHomePeriodDisplay();
             updateHomeChart();
-            drawVolumePie(); // NOUVEAU: Mettre à jour le camembert aussi
+            drawVolumePie(); 
         });
 
         homeDateSelector.style.display = 'flex'; // Afficher par défaut car la vue initiale est 'jour'
@@ -972,13 +989,14 @@ function setupRangeListeners() {
     });
 }
 
+// Met à jour l'affichage de la période sélectionnée sur l'onglet Accueil
 function updateHomePeriodDisplay() {
     const labelEl = document.getElementById('homeDatePicker');
     if (!labelEl) return;
 
     if (homeRange === 'year') {
         labelEl.type = 'number';
-        labelEl.value = homeViewDate.getFullYear(); // Affiche l'année
+        labelEl.value = homeViewDate.getFullYear(); 
     } else if (homeRange === 'month') {
         labelEl.type = 'month';
         labelEl.value = `${homeViewDate.getFullYear()}-${String(homeViewDate.getMonth() + 1).padStart(2, '0')}`; // Format YYYY-MM
@@ -988,6 +1006,7 @@ function updateHomePeriodDisplay() {
     }
 }
 
+// Met à jour l'affichage de la période sélectionnée sur l'onglet Coûts
 function updateCostsPeriodDisplay() {
     const labelEl = document.getElementById('costsDatePicker');
     if (!labelEl) return;
@@ -1006,12 +1025,14 @@ function updateCostsPeriodDisplay() {
     }
 }
 
+// Met à jour le capteur sélectionné globalement
 function setSelectedMac(newMac) {
     selectedMac = newMac;
     document.querySelectorAll('.sensor-select-all').forEach(o => o.value = newMac);
     updateHomeChart(); drawDailyCostChart(); drawVolumePie(); drawCostPie();
 }
 
+// Remplit les sélecteurs de capteurs avec les options disponibles
 function populateSensorSelectors() {
     document.querySelectorAll('.sensor-select-all').forEach(select => {
         select.innerHTML = `<option value="ALL">Tous les capteurs</option>` + Object.keys(sensorConfig).map(mac => `<option value="${mac}">${sensorConfig[mac].name}</option>`).join('');
@@ -1022,6 +1043,7 @@ function populateSensorSelectors() {
 // 7. GESTION DU PROFIL (AJOUTÉ)
 // ==========================================
 
+// Charger les informations du profil utilisateur et les habitudes
 async function loadProfile() {
     try {
         // 1. Charger les infos utilisateur de base
@@ -1053,6 +1075,7 @@ async function loadProfile() {
     }
 }
 
+// Charger les habitudes utilisateur et remplir le formulaire
 async function loadHabits(userId) {
     try {
         const res = await fetch(`${API_BASE_URL}get_habits.php?user_id=${userId}`);
@@ -1093,6 +1116,7 @@ async function loadHabits(userId) {
     }
 }
 
+// Synchroniser l'affichage des sections en fonction des habitudes chargées
 async function saveProfile() {
     const form = document.getElementById('profile-form');
     const formData = new FormData(form);
@@ -1142,6 +1166,7 @@ async function saveProfile() {
     }
 }
 
+// Gérer les interactions du profil (avatar)
 function setupProfileInteractions() {
     const avatarWrapper = document.querySelector('.avatar-wrapper');
     const fileInput = document.getElementById('profile-input-file');
@@ -1160,6 +1185,7 @@ function setupProfileInteractions() {
 
 // --- FONCTIONS D'INTERFACE (ACCORDÉON & TOGGLES) ---
 
+// Gérer l'accordéon des sections
 function toggleAccordion(header) {
     const content = header.nextElementSibling;
     const arrow = header.querySelector('.arrow');
@@ -1168,6 +1194,7 @@ function toggleAccordion(header) {
     arrow.textContent = content.classList.contains('hidden') ? '▼' : '▲';
 }
 
+// Gérer l'affichage des options de logement
 function toggleHousingOptions() {
     const type = document.getElementById('habits-logement').value;
     const subMaison = document.getElementById('sub-maison');
@@ -1182,6 +1209,7 @@ function toggleHousingOptions() {
     }
 }
 
+// Gérer l'affichage des options de jardin
 function toggleGardenOptions() {
     const hasGarden = document.getElementById('habits-jardin').checked;
     const subJardin = document.getElementById('sub-jardin');
@@ -1193,6 +1221,7 @@ function toggleGardenOptions() {
     }
 }
 
+// Gérer l'affichage des options de douche/bain
 function toggleShowerOptions() {
     const hygiene = document.querySelector('input[name="hygiene"]:checked').value;
     const subDouche = document.getElementById('sub-douche');
@@ -1206,6 +1235,7 @@ function toggleShowerOptions() {
     }
 }
 
+// Gérer l'affichage des options de lave-vaisselle
 function toggleDishwasher() {
     const hasDishwasher = document.getElementById('habits-lave-vaisselle').checked;
     const subDishwasher = document.getElementById('sub-lave-vaisselle');
@@ -1217,6 +1247,7 @@ function toggleDishwasher() {
     }
 }
 
+// Synchroniser tous les toggles d'habitudes
 function synchronizeHabitToggles() {
     toggleHousingOptions();
     toggleGardenOptions();
@@ -1557,6 +1588,7 @@ async function generateRecommendations() {
     }
 }
 
+// --- Options du graphique d'accueil avec gestion du clic ---
 function getHomeChartOptions() {
     return {
         responsive: true,
@@ -1632,7 +1664,7 @@ function getHomeChartOptions() {
                         // On envoie la validation au serveur
                         validateObjective(relevantObjective.id, liters.toFixed(2));
                         
-                        // NOUVEAU : Si l'objectif est manqué, on propose de le reconduire ou de le modifier
+                        // Si l'objectif est manqué, on propose de le reconduire ou de le modifier
                         if (!isSuccess) {
                             setTimeout(async () => {
                                 const modify = await showModal(
@@ -1679,6 +1711,7 @@ function getHomeChartOptions() {
     };
 }
 
+// Appliquer les styles dynamiques au graphique en fonction de la vue (Jour/Semaine/Mois)
 function applyChartStyles(chart, isDayView) {
     const dataset = chart.data.datasets[0];
     dataset.backgroundColor = isDayView ? 'rgba(11, 103, 255, 0.7)' : 'rgba(11,103,255,.12)';
@@ -1689,9 +1722,10 @@ function applyChartStyles(chart, isDayView) {
 }
 
 // ==========================================
-// 8. GESTION DES CAPTEURS (NOUVEAU)
+// 8. GESTION DES CAPTEURS 
 // ==========================================
 
+// Stockage global de la configuration des capteurs
 async function loadSensorConfig() {
     try {
         const res = await fetch(`${API_BASE_URL}get_sensor_config.php`);
@@ -1716,6 +1750,7 @@ async function loadSensorConfig() {
     }
 }
 
+// Afficher l'interface de configuration des capteurs
 async function displaySensorConfigUI() {
     const container = document.getElementById('sensor-config-list');
     const addSensorFormContainer = document.getElementById('add-sensor-form-container');
@@ -1771,6 +1806,7 @@ async function displaySensorConfigUI() {
     }
 }
 
+// Ajouter un capteur manuellement
 async function addManualSensor(event) {
     event.preventDefault();
     const macInput = document.getElementById('new-sensor-mac');
@@ -1809,6 +1845,7 @@ async function addManualSensor(event) {
     }
 }
 
+// Sauvegarder la configuration des capteurs
 async function saveSensorConfig() {
     const inputs = document.querySelectorAll('#sensor-config-list input.sensor-name-input');
     const configToSave = Array.from(inputs).map(input => ({
@@ -1860,14 +1897,14 @@ async function saveSensorConfig() {
         options: getHomeChartOptions()
     });
 
-    await loadSensorConfig(); // NOUVEAU: Charger la config des capteurs en premier
+    await loadSensorConfig(); // Charger la config des capteurs en premier
     setupRangeListeners();
     setupProfileInteractions(); // Initialiser les interactions du profil
     await loadProfile(); // Charger les données du profil au démarrage
-    await loadActivityData(); // NOUVEAU: Charger les données des activités
+    await loadActivityData(); // Charger les données des activités
     await refreshUserList(); // Charger la liste des membres
-    await loadObjectives(); // NOUVEAU: Charger les objectifs depuis la BDD
-    // renderObjectives(); // Cet appel est maintenant dans loadObjectives()
+    await loadObjectives(); // Charger les objectifs depuis la BDD
+    
 
     updateCostsPeriodDisplay();
 
@@ -1889,7 +1926,7 @@ async function saveSensorConfig() {
 
     // let counter = 0;
     // const updateInterval = 60000; 
-    // --- NOUVEAU : Rafraîchissement automatique des données ---
+    // --- Rafraîchissement automatique des données ---
     const REALTIME_UPDATE_INTERVAL = 1000; // en millisecondes (1 seconde pour plus de réactivité)
 
     // setInterval(async () => {

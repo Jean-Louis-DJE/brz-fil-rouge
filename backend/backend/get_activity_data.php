@@ -1,4 +1,7 @@
 <?php
+// backend/backend/get_activity_data.php
+// Ce fichier récupère les données des activités et les informations associées
+
 header('Content-Type: application/json');
 include 'config.php'; // Utilise votre fichier de connexion existant
 

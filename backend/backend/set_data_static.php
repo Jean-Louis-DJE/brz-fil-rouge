@@ -1,8 +1,6 @@
 <?php
-// c:\xampp\htdocs\brz\backend\set_data_static.php
-// Ce fichier est inclus par seed_db.php et contient toutes les requêtes d'insertion statiques.
-
-// Insertion de l'utilisateur principal par défaut
+// backend/backend/seed_db.php
+// Ce fichier insère des données de consommation d'eau dans la base de données
 $pdo->exec("INSERT INTO utilisateur (prenom, nom, departement, is_main_user) VALUES ('Jean', 'Dupont', '35', 1);");
 
 // Insertion des activités possibles

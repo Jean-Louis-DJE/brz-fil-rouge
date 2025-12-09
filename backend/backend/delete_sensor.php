@@ -1,4 +1,7 @@
 <?php
+// backend/backend/delete_sensor.php
+// Ce fichier gère la suppression d'un capteur et de ses données associées dans la base de données
+
 header("Content-Type: application/json");
 include "config.php";
 
@@ -11,6 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $data = json_decode(file_get_contents("php://input"), true);
 $mac = $data['mac'] ?? null;
 
+// Valider que l'adresse MAC est bien présente
 if (!$mac) {
     http_response_code(400);
     echo json_encode(["error" => "Adresse MAC manquante"]);

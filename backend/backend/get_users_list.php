@@ -1,4 +1,6 @@
 <?php
+// backend/backend/get_users_list.php
+// Ce fichier récupère la liste des utilisateurs de la base de données
 header("Content-Type: application/json");
 include "config.php";
 

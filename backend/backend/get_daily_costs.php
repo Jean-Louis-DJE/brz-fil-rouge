@@ -1,5 +1,6 @@
 <?php
 // backend/get_daily_costs.php
+// Ce fichier récupère les coûts journaliers des volumes d'eau sur une période donnée
 header("Content-Type: application/json");
 include "config.php";
 
@@ -49,6 +50,8 @@ try {
     $stmt->execute($params);
     $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Formater les résultats pour la réponse JSON
+    // On calcule le coût total pour chaque jour/mois
     $resultat = [];
 
     foreach ($data as $row) {

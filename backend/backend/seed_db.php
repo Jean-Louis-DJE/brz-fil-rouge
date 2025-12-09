@@ -1,5 +1,6 @@
 <?php
-// c:\xampp\htdocs\brz\backend\seed_db.php
+// backend/backend/seed_db.php
+// Ce fichier insère des données de consommation d'eau dans la base de données
 
 header('Content-Type: application/json');
 
@@ -55,7 +56,7 @@ try {
     include 'set_data_static.php'; // On inclut le fichier de données statiques
     echo "Données de base insérées.\n";
 
-    // --- NOUVELLE ÉTAPE : Insertion de la configuration des capteurs ---
+    // --- ÉTAPE 3 : Insertion de la configuration des capteurs ---
     echo "Insertion de la configuration des capteurs...\n";
     $colors = ['#0b67ff', '#ff8c1a', '#10bffd', '#4caf50', '#f44336', '#9c27b0', '#ffeb3b', '#795548'];
     $colorIndex = 0;

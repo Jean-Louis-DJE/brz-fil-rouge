@@ -1,4 +1,6 @@
 <?php
+// backend/backend/add_user.php
+// Ce fichier gère l'ajout d'un utilisateur dans la base de données
 header("Content-Type: application/json");
 include "config.php";
 

@@ -1,6 +1,8 @@
 <?php
+// backend/backend/get_objectives.php
+// Ce fichier récupère les objectifs de l'utilisateur principal
 function handle_get_objectives() {
-    global $pdo; // On importe la variable $pdo du fichier config.php
+    global $pdo; 
 
     // Récupérer l'ID de l'utilisateur principal
     $stmtUser = $pdo->prepare("SELECT id FROM utilisateur WHERE is_main_user = 1 LIMIT 1");

@@ -1,19 +1,19 @@
 <?php
-// send_wifi_db.php
-// Récupère SSID/PWD depuis la base de données et appelle le script Python
-// IMPORTANT : adapte les paramètres de connexion DB ci-dessous.
+// backend/backend/manage_ap_cred.php
+// Ce fichier gère l'envoi des identifiants WiFi à un script Python via I²C
+// Il est utilisé pour configurer les identifiants WiFi sur un appareil via I²C
 
 $dbHost = 'localhost';
-$dbName = 'breizh4line';     // <-- change
-$dbUser = 'pmauser';    // <-- change
-$dbPass = 'MotDePasse123';     // <-- change
-$pythonScript = '/var/www/html/backend/com_with_aff.py'; // chemin du script Python
-$pythonBin = '/usr/bin/python3'; // chemin de l'interpréteur python3
+$dbName = 'breizh4line';   
+$dbUser = 'pmauser';    
+$dbPass = 'MotDePasse123';     
+$pythonScript = '/var/www/html/backend/com_with_aff.py'; 
+$pythonBin = '/usr/bin/python3'; 
 
 header('Content-Type: text/html; charset=utf-8');
 
 try {
-    // Connexion PDO
+    
     $dsn = "mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4";
     $pdo = new PDO($dsn, $dbUser, $dbPass, [
         PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

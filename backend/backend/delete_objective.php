@@ -1,6 +1,9 @@
 <?php
+// backend/backend/delete_objective.php
+// Ce fichier gère la suppression d'un objectif dans la base de données
+
 header("Content-Type: application/json");
-include "config.php"; // Inclut la connexion à la base de données
+include "config.php"; 
 
 // 1. Récupérer l'ID de l'objectif depuis les paramètres de l'URL
 $objectiveId = $_GET['id'] ?? null;

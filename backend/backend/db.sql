@@ -1,5 +1,3 @@
--- Suppression de la base de données si elle existe pour repartir de zéro
--- ===================================================================
 -- =============================================================================
 -- SCRIPT DE STRUCTURE POUR LA BASE DE DONNÉES BREIZH4LINE
 -- Ce script contient uniquement la structure des tables (CREATE TABLE).

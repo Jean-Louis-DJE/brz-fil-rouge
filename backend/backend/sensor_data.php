@@ -1,5 +1,6 @@
 <?php
-// Utilise la configuration centralisée
+// backend/backend/insert_data.php
+// Ce fichier insère des données de consommation d'eau dans la base de données
 include 'config.php';
 
 function log_message($msg){

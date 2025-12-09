@@ -1,3 +1,6 @@
+#backend/backend/send_wifi_i2c.py
+#Ce script envoie les informations Wi-Fi (SSID et mot de passe) à un ESP32 via I2C.
+#Il est utilisé pour configurer l'ESP32 avec les informations Wi-Fi nécessaires.
 #!/usr/bin/env python3
 
 import smbus

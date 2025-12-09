@@ -1,7 +1,12 @@
 <?php
+// backend/backend/setup_habits_db.php
+// Ce fichier crée la table des habitudes si elle n'existe pas déjà
+// Il est utilisé pour initialiser la base de données des habitudes
 include 'config.php';
 
 try {
+    // Création de la table des habitudes
+    // Si la table existe déjà, elle ne sera pas recréée
     $sql = "CREATE TABLE IF NOT EXISTS habitudes (
         id INT AUTO_INCREMENT PRIMARY KEY,
         user_id INT NOT NULL,

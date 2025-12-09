@@ -1,4 +1,6 @@
 <?php
+// backend/backend/update_profile.php
+// Ce fichier met à jour le profil de l'utilisateur principal
 header("Content-Type: application/json");
 include "config.php";
 

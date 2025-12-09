@@ -1,4 +1,6 @@
 <?php
+// backend/backend/get_data.php
+// Ce fichier récupère les données de consommation d'eau sur une période donnée
 header("Content-Type: application/json");
 include "config.php";
 

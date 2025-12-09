@@ -1,4 +1,7 @@
 <?php
+// backend/backend/update_objective_status.php
+// Ce fichier met à jour le statut d'un objectif dans la base de données
+// Il attend une requête POST avec l'ID de l'objectif et la valeur finale
 header("Content-Type: application/json");
 include "config.php";
 

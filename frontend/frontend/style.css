@@ -166,7 +166,6 @@ h2 {
   margin-bottom: 14px;
 }
 .kpi {
-  /* RETOUR À LA FORME ORIGINALE - Corrigée et droite */
   width: 320px; /* Assez grand pour le contenu */
   height: 320px;
   margin-left: auto;
@@ -704,7 +703,7 @@ canvas { display: block; width: 100%; }
 .reco-item-values .real-value { font-weight: 600; }
 .reco-item-values .ideal-value { color: var(--muted); }
 
-/* NOUVEAU: Grille pour la page Analyse et Objectifs (version corrigée) */
+/* Grille pour la page Analyse et Objectifs (version corrigée) */
 @media (min-width: 1024px) {
   #analysis-content {
     padding: 16px 24px;
@@ -729,7 +728,7 @@ canvas { display: block; width: 100%; }
     top: 84px; /* 64px (topbar) + 20px (marge) */
   }
 
-  /* NOUVEAU: Grille pour la page Coûts */
+  /* Grille pour la page Coûts */
   .costs-grid {
     grid-column: 1 / -1; /* Prend toute la largeur */
     display: grid;
@@ -738,7 +737,7 @@ canvas { display: block; width: 100%; }
     align-items: start;
   }
 
-  /* NOUVEAU: Grille pour la page Accueil */
+  /* Grille pour la page Accueil */
   .home-grid {
     grid-column: 1 / -1; /* Prend toute la largeur */
     display: grid;
@@ -851,7 +850,7 @@ canvas { display: block; width: 100%; }
 #objectives-list .objective-value { font-weight: 700; font-size: 15px; color: var(--primary); margin-top: 2px; }
 #objectives-list .objective-status { font-size: 12px; color: var(--muted); }
 
-/* NOUVEAU: Style pour le bouton de suppression */
+/* Style pour le bouton de suppression */
 .delete-objective-btn {
   background: none;
   border: none;
@@ -861,7 +860,7 @@ canvas { display: block; width: 100%; }
   padding: 4px;
 }
 
-/* NOUVEAU: Style pour aligner l'input et le bouton OK */
+/* Style pour aligner l'input et le bouton OK */
 .input-with-button {
   display: flex;
   gap: 8px;
@@ -874,7 +873,7 @@ canvas { display: block; width: 100%; }
   padding: 10px 20px !important;
 }
 
-/* NOUVEAU: Style pour les sections animées dans la modale */
+/* Style pour les sections animées dans la modale */
 .collapsible-section {
   transition: max-height 0.4s ease-in-out, opacity 0.3s ease-in-out, transform 0.4s ease-in-out, margin-top 0.4s ease-in-out;
   overflow: hidden;
@@ -894,7 +893,7 @@ canvas { display: block; width: 100%; }
 /* Rétablir la marge quand la section est visible */
 .collapsible-section.show.activity-specific-info { margin-top: 20px !important; }
 
-/* NOUVEAU: Style pour l'animation en cascade des éléments de la modale */
+/* Style pour l'animation en cascade des éléments de la modale */
 .modal-item-appear {
   opacity: 0;
   transform: translateY(15px);
