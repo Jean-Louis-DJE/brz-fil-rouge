@@ -15,7 +15,7 @@
     - [Installation Backend](#installation-backend)
     - [Installation Frontend](#installation-frontend)
 4.  [🏗️ Structure du Projet](#-structure-du-projet)
-5.  [📸 Captures d'écran (à ajouter)](#-captures-décran-à-ajouter)
+5.  [📸 Captures d'écran](#-captures-décran)
 
 ---
 
@@ -140,12 +140,19 @@
 
 ---
 
-## 📸 Captures d'écran (à ajouter)
-
-*(Insérez ici des captures d'écran de votre application pour la rendre plus attrayante)*
+## 📸 Captures d'écran
 
 **Exemple de Tableau de bord :**
-`[Image du tableau de bord]`
+![Tableau de bord de l'application Breizh4Line](Assets/captures/dashboard_conso.png)
 
 **Exemple d'analyse des coûts :**
-`[Image de la page des coûts]`
+![Analyse des coûts sur Breizh4Line](Assets/captures/dashboard_couts.png)
+
+**Exemple Paramètres**
+![Paramètres pour appairer les capteurs](Assets/captures/parametres.png)
+
+**Exemple Analyse et Objectifs**
+![Analyse et Objectifs pour l'utilisateur](Assets/captures/analyse_objectifs.png)
+
+**Exemple Profil**
+![Profil à compléter par l'utilisateur](Assets/captures/profil.png)
