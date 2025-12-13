@@ -1,0 +1,206 @@
+#include <Wire.h>
+#include <ArduinoJson.h>  // Bibliothèque ArduinoJson de Benoît Blanchon
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <TM1637Display.h>
+
+#define I2C_ADDRESS 0x42  // Adresse I²C de l'ESP32
+
+#define RXD2 16
+#define TXD2 17
+
+#define CLK 27
+#define DIO 26
+TM1637Display display(CLK, DIO);
+
+String buffer = "";
+String message = "";
+bool wifiConnected = false;
+
+String receivedData = "";
+int numberValue = 0;
+int predValue = 0;
+
+// --- Fonction d’affichage : nombre + lettre L ---
+void displayNumberWithL(int number) {
+  display.clear();
+
+  // Sécurise la plage d'affichage (max 3 digits)
+  if (number > 99) number = 99;
+  if (number < 0) number = 0;
+
+  uint8_t digits[4] = {0, 0, 0, 0};
+
+  // ----- Construction des digits -----
+  if (number < 10) {
+    // 0X L
+    digits[1] = display.encodeDigit(0);     // zéro ajouté
+    digits[2] = display.encodeDigit(number);
+    digits[1] |= 0x80;
+  } else {
+    // XY L
+    digits[1] = display.encodeDigit(number / 10);
+    digits[2] = display.encodeDigit(number % 10);
+  }
+
+  // Lettre L sur le dernier digit
+  digits[3] = SEG_D | SEG_E | SEG_F;
+
+  // ----- Affichage -----
+  display.setSegments(digits);
+}
+
+
+void receiveEvent(int numBytes) {
+  while (Wire.available()) {
+    char c = Wire.read();
+    buffer += c;
+  }
+}
+
+void connectToWiFi(const char* ssid, const char* pwd) {
+  Serial.println("\nConnexion au Wi-Fi...");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, pwd);
+
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println("\n✅ Wi-Fi connecté !");
+    Serial.print("Adresse IP : ");
+    Serial.println(WiFi.localIP());
+    wifiConnected = true;
+  } else {
+    Serial.println("\n❌ Échec de la connexion Wi-Fi.");
+  }
+}
+
+void sendHttpPost(int value) {
+  if (!wifiConnected) {
+    Serial.println("⚠️ Wi-Fi non connecté, impossible d’envoyer la requête.");
+    return;
+  }
+
+  HTTPClient http;
+  String url = "http://172.20.10.13/backend/sensor_data.php";
+
+  http.begin(url);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+  String mac = WiFi.macAddress();
+  String body = "device_id=" + mac + "&value=" + String(value);
+  int httpCode = http.POST(body);
+
+  if (httpCode > 0) {
+    Serial.print("Réponse serveur (");
+    Serial.print(httpCode);
+    Serial.print(") : ");
+    Serial.println(http.getString());
+  } else {
+    Serial.print("Erreur HTTP : ");
+    Serial.println(httpCode);
+  }
+
+  http.end();
+}
+
+void setup() {
+   // Initialisation de l'afficheur
+  display.setBrightness(5);
+  display.clear();
+
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2);
+  Serial.begin(115200);
+
+  // Initialise l’ESP32 comme esclave I²C
+  Wire.begin(I2C_ADDRESS);
+  Wire.onReceive(receiveEvent);
+
+  displayNumberWithL(0);
+  Serial.println("ESP32 prêt à recevoir des données I²C (JSON)...");
+  Serial.println("Bluetooth HC-05 prêt sur Serial2 (RX2=16, TX2=17)...");
+}
+
+void loop() {
+  message = "{'ssid' : 'iPhone de Romain', 'pwd' : 'yellowflower387'}";
+
+  Serial.println("...");
+
+  if (message.length() != 0) {
+
+    message = "{'ssid' : 'iPhone de Romain', 'pwd' : 'yellowflower387'}";
+
+    Serial.println("Message complet reçu :");
+    Serial.println(message);
+
+    StaticJsonDocument<256> doc;
+    DeserializationError error = deserializeJson(doc, message);
+
+    if (error) {
+      Serial.print("Erreur de parsing JSON : ");
+      Serial.println(error.c_str());
+    } else {
+      const char* ssid = doc["ssid"];
+      const char* pwd = doc["pwd"];
+
+      Serial.println("===== Données reçues =====");
+      Serial.print("SSID : ");
+      Serial.println(ssid);
+      Serial.print("Mot de passe : ");
+      Serial.println(pwd);
+      Serial.println("==========================");
+
+      // Connexion Wi-Fi après réception
+      connectToWiFi(ssid, pwd);
+
+      // Envoi vers ton serveur PHP
+      Serial.println(wifiConnected);
+      Serial.println(Serial2.available());
+      if (wifiConnected) {
+        while (true){
+          if (Serial2.available()) {
+          char c = Serial2.read();
+
+          // Fin de message détectée
+          if (c == '\n' || c == '\r') {
+            if (receivedData.length() > 0) {
+              // Conversion du texte reçu en nombre
+              numberValue = receivedData.toInt();
+
+              // Affiche sur le moniteur série
+              Serial.print("Reçu par Bluetooth : ");
+              Serial.println(numberValue);
+
+              // Affiche sur le TM1637 : nombre + lettre L
+              //displayNumberWithL(numberValue);
+              if (predValue != numberValue ) {
+                displayNumberWithL(numberValue); 
+                
+                if(numberValue - predValue >= 0) {sendHttpPost(numberValue - predValue);}; 
+
+                predValue=numberValue;
+                };
+              //sendHttpPost(numberValue);
+
+              // Réinitialise le buffer
+              receivedData = "";
+            }
+          } else {
+            receivedData += c;
+          }
+        }
+        }
+        
+      }
+    }
+
+    buffer = ""; // Nettoyage du buffer après traitement
+  }
+
+  delay(100);
+}
