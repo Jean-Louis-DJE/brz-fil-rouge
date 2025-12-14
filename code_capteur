@@ -1,0 +1,121 @@
+#include "BluetoothSerial.h"
+
+
+BluetoothSerial SerialBT;
+
+
+const int FLOW_PIN = 4;          
+const float K_FACTOR = 1420.0;  
+
+
+volatile unsigned long pulses = 0;
+float totalLitres = 0;
+float lastSentVolume = 0;
+float lastDebit = 0;
+
+
+unsigned long lastUpdate = 0;
+const unsigned long UPDATE_INTERVAL = 1000;
+
+
+// Anti-bruit
+volatile unsigned long lastPulseTime = 0;
+const unsigned long DEBOUNCE_INTERVAL = 2;
+
+
+// NEW
+unsigned long lastMove = 0;
+bool zeroSent = false;
+
+
+void IRAM_ATTR onPulse() {
+  unsigned long now = micros();
+  if (now - lastPulseTime > (DEBOUNCE_INTERVAL * 1000)) {
+    pulses++;
+    lastPulseTime = now;
+  }
+}
+
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(FLOW_PIN, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(FLOW_PIN), onPulse, FALLING);
+
+
+  SerialBT.begin("ESP32_FLOWMETER", true);
+  SerialBT.setPin("1234", 4);
+  SerialBT.connect("HELSINKI");
+}
+
+
+void loop() {
+  unsigned long currentMillis = millis();
+
+
+  // 🔥 Si aucune activité pendant 10 secondes
+  if (!zeroSent && (currentMillis - lastMove > 20000)) {
+    if (SerialBT.connected()) {
+      SerialBT.print("0.0");
+      SerialBT.println();
+
+
+      Serial.println("📉 10s sans mouvement → 0.0 envoyé + RESET compteur");
+
+
+      // 🔥🔥 RESET DU COMPTEUR 🔥🔥
+      totalLitres = 0;
+      lastSentVolume = 0;
+      lastDebit = 0;
+
+
+      zeroSent = true;
+    }
+  }
+
+
+  if (currentMillis - lastUpdate >= UPDATE_INTERVAL) {
+    lastUpdate = currentMillis;
+
+
+    noInterrupts();
+    unsigned long count = pulses;
+    pulses = 0;
+    interrupts();
+
+
+    if (count == 0) {
+      Serial.print("⏸️ Aucun mouvement détecté. Dernier volume : ");
+      Serial.println(lastSentVolume, 3);
+      return;
+    }
+
+
+    // mouvement → reset du timer + autoriser envoi normal
+    lastMove = currentMillis;
+    zeroSent = false;
+
+
+    float debit = (count * 60.0) / K_FACTOR;
+    totalLitres += count / K_FACTOR;
+
+
+    if (SerialBT.connected()) {
+      lastSentVolume = totalLitres;
+
+
+      float volumeToSend = lastSentVolume * 10.0; 
+
+
+      SerialBT.print(volumeToSend, 1);
+      SerialBT.println();
+
+
+      lastDebit = debit;
+
+
+      Serial.print("📡 Volume envoyé : ");
+      Serial.println(volumeToSend, 1);
+    }
+  }
+}
